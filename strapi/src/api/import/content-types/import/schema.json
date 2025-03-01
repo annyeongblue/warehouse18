@@ -1,0 +1,33 @@
+{
+  "kind": "collectionType",
+  "collectionName": "imports",
+  "info": {
+    "singularName": "import",
+    "pluralName": "imports",
+    "displayName": "import",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "date": {
+      "type": "date"
+    },
+    "total": {
+      "type": "integer"
+    },
+    "order": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::order.order",
+      "inversedBy": "import"
+    },
+    "import_details": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::import-detail.import-detail",
+      "mappedBy": "import"
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "kind": "collectionType",
+  "collectionName": "exports",
+  "info": {
+    "singularName": "export",
+    "pluralName": "exports",
+    "displayName": "export",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "date": {
+      "type": "date"
+    },
+    "export_user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::user-1.user-1",
+      "inversedBy": "exports"
+    },
+    "export_approver": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::user-1.user-1",
+      "inversedBy": "ex_approver"
+    },
+    "statas": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "export_details": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::export-detail.export-detail",
+      "mappedBy": "export"
+    }
+  }
+}

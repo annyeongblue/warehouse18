@@ -1,0 +1,122 @@
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+// import Sidebar from './components/Sidebar';
+import SidebarControl from './components/layout/SidebarControl';
+import Search from './components/common/Search';
+import Dashboard from './pages/Dashboard';
+import History from './pages/History';
+import Items from './pages/Items';
+import Requests from './pages/Requests';
+import Navbar from './components/layout/Navbar';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import SearchBar from './components/common/SearchBar';
+import User from './pages/User';
+import Register from './forms/Register';
+import Login from './forms/Login';
+import Profile from './components/common/Profile';
+import Categories from './pages/Categories';
+import Users from './pages/Users';
+import ItemInfo from './pages/ItemInformation';
+import Welcome from './pages/Welcome';
+import Import from './pages/Import';
+import TypeSelected from './components/common/TypeSelected'
+import Brand from './pages/Brand'
+import Unit from './pages/Unit'
+
+import GoogleAuth from '../src/test/GoogleAuth'
+
+import SideTest from './components/layout/SidebarTest';
+
+//Test Form
+import LogT from './test/LoginTest';
+import ReT from './test/RegisterTest';
+
+import Callback from './callback';
+
+const Layout = ({ children }) => {
+  const location = useLocation();
+
+  // Define routes where the Sidebar should NOT appear
+  const noSidebarRoutes = ['/login', '/register', '/test', '/sidebar', '/navbar', '/logt', 'ret' ,'/'];
+
+  // Check if current route matches any route in the noSidebarRoutes array
+  const hideSidebar = noSidebarRoutes.includes(location.pathname);
+
+  return (
+    <div style={{ display: 'flex' }}>
+      {/* Render Sidebar only if hideSidebar is false */}
+      {!hideSidebar && open && <SidebarControl />}
+
+      {/* Main Content Area */}
+      <div
+        style={{
+          width: hideSidebar ? '0%' : '100%', // Adjusts the width dynamically
+          marginLeft: hideSidebar ? '0%' : '0%', // Aligns content appropriately
+          padding: '50px',
+          marginTop: '30px',
+          flexGrow: 1,
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+};
+
+const theme = createTheme ({
+  typography: {
+    allVariants: {
+      fontFamily: 'Poppins, sans-serif',
+      textTransform: 'none',
+      fontSize: 17,
+    },
+  },
+});
+
+const App = () => {
+  const [open, setOpen] = React.useState(true); // Default state for sidebar
+
+  return (
+    <ThemeProvider theme={theme}>
+      <Router>
+      <Layout open={open} setOpen={setOpen}> {/* Pass open and setOpen here */}
+        <Routes>
+          <Route path="/" element={<Welcome />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/history" element={<History />} />
+
+          <Route path="/requests" element={<Requests />} />
+          <Route path="/search" element={<Search />} />
+          <Route path="/sidetest" element={<SideTest />} />
+          <Route path="/navbar" element={<Navbar open={open} setOpen={setOpen} />} /> Pass props to Navbar
+          <Route path="/Login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/searchbar" element={<SearchBar />} />
+          <Route path="/user" element={<User />} />
+          <Route path="/logt" element={<LogT />} />
+          <Route path="/ret" element={<ReT />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/users" element={<Users />} />
+          <Route path="/import" element={<Import />} />
+          <Route path="/type" element={<TypeSelected />} />
+          <Route path="/google" element={<GoogleAuth />} />
+
+          <Route path='/auth/google/callback' element={<Callback />} />
+          
+          <Route path="/LogT" element={<LogT />} />
+          <Route path="/ReT" element={<ReT />} />
+
+          <Route path="/inventory/items" element={<Items/>} />
+          <Route path="/inventory/unit" element={<Unit/>} />
+          <Route path="/inventory/brand" element={<Brand/>} />
+          <Route path="/inventory/categories" element={<Categories />} />
+          <Route path="/inventory/iteminformation" element={<ItemInfo />} />
+        </Routes>
+      </Layout>
+    </Router>
+    </ThemeProvider>    
+  );
+};
+
+
+export default App;

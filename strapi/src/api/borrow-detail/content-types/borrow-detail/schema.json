@@ -1,0 +1,32 @@
+{
+  "kind": "collectionType",
+  "collectionName": "borrow_details",
+  "info": {
+    "singularName": "borrow-detail",
+    "pluralName": "borrow-details",
+    "displayName": "borrow_detail"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "borrow": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::borrow.borrow",
+      "inversedBy": "borrow_details"
+    },
+    "item": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::item.item",
+      "inversedBy": "borrow_details"
+    },
+    "qty": {
+      "type": "integer"
+    },
+    "description": {
+      "type": "string"
+    }
+  }
+}

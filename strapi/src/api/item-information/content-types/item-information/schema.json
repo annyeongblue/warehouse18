@@ -1,0 +1,30 @@
+{
+  "kind": "collectionType",
+  "collectionName": "item_informations",
+  "info": {
+    "singularName": "item-information",
+    "pluralName": "item-informations",
+    "displayName": "item_information",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "serial": {
+      "type": "string"
+    },
+    "item": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::item.item",
+      "inversedBy": "item_informations"
+    },
+    "repair_details": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::repair-detail.repair-detail",
+      "mappedBy": "item_information"
+    }
+  }
+}

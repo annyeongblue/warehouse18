@@ -1,0 +1,33 @@
+{
+  "kind": "collectionType",
+  "collectionName": "import_details",
+  "info": {
+    "singularName": "import-detail",
+    "pluralName": "import-details",
+    "displayName": "import_detail",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "amount": {
+      "type": "integer"
+    },
+    "qty": {
+      "type": "integer"
+    },
+    "import": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::import.import",
+      "inversedBy": "import_details"
+    },
+    "item": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::item.item",
+      "inversedBy": "import_details"
+    }
+  }
+}

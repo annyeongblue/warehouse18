@@ -1,0 +1,39 @@
+{
+  "kind": "collectionType",
+  "collectionName": "repair_details",
+  "info": {
+    "singularName": "repair-detail",
+    "pluralName": "repair-details",
+    "displayName": "repair_detail",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "reapir_part": {
+      "type": "string"
+    },
+    "cost": {
+      "type": "integer"
+    },
+    "qty": {
+      "type": "integer"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "repair": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::repair.repair",
+      "inversedBy": "repair_details"
+    },
+    "item_information": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::item-information.item-information",
+      "inversedBy": "repair_details"
+    }
+  }
+}

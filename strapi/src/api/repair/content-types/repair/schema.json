@@ -1,0 +1,45 @@
+{
+  "kind": "collectionType",
+  "collectionName": "repairs",
+  "info": {
+    "singularName": "repair",
+    "pluralName": "repairs",
+    "displayName": "repair",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "repair_date": {
+      "type": "date"
+    },
+    "repair_description": {
+      "type": "string"
+    },
+    "statas": {
+      "type": "string"
+    },
+    "repair_user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::user-1.user-1",
+      "inversedBy": "user_repair"
+    },
+    "reapir_approver": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::user-1.user-1",
+      "inversedBy": "approver_reapir"
+    },
+    "return_date": {
+      "type": "date"
+    },
+    "repair_details": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::repair-detail.repair-detail",
+      "mappedBy": "repair"
+    }
+  }
+}

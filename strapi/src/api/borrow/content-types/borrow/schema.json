@@ -1,0 +1,54 @@
+{
+  "kind": "collectionType",
+  "collectionName": "borrows",
+  "info": {
+    "singularName": "borrow",
+    "pluralName": "borrows",
+    "displayName": "borrow",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "date": {
+      "type": "date"
+    },
+    "return_date": {
+      "type": "date"
+    },
+    "borrow_user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::user-1.user-1",
+      "inversedBy": "borrows"
+    },
+    "borrow_approver": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::user-1.user-1",
+      "inversedBy": "approver"
+    },
+    "statas": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "article": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::article.article",
+      "inversedBy": "borrows"
+    },
+    "return_comment": {
+      "type": "string"
+    },
+    "borrow_details": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::borrow-detail.borrow-detail",
+      "mappedBy": "borrow"
+    }
+  }
+}

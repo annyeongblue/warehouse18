@@ -1,0 +1,75 @@
+{
+  "kind": "collectionType",
+  "collectionName": "items",
+  "info": {
+    "singularName": "item",
+    "pluralName": "items",
+    "displayName": "item",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string"
+    },
+    "qty": {
+      "type": "integer"
+    },
+    "description": {
+      "type": "string"
+    },
+    "category": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::category.category",
+      "inversedBy": "items"
+    },
+    "unit": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::unit.unit",
+      "inversedBy": "items"
+    },
+    "brand": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::brand.brand",
+      "inversedBy": "items"
+    },
+    "item_informations": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::item-information.item-information",
+      "mappedBy": "item"
+    },
+    "order_details": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::order-detail.order-detail",
+      "mappedBy": "item"
+    },
+    "import_details": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::import-detail.import-detail",
+      "mappedBy": "item"
+    },
+    "export_details": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::export-detail.export-detail",
+      "mappedBy": "item"
+    },
+    "borrow_details": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::borrow-detail.borrow-detail",
+      "mappedBy": "item"
+    }
+  }
+}

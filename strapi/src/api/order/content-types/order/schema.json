@@ -1,0 +1,45 @@
+{
+  "kind": "collectionType",
+  "collectionName": "orders",
+  "info": {
+    "singularName": "order",
+    "pluralName": "orders",
+    "displayName": "order",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "date": {
+      "type": "date"
+    },
+    "statas": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "check_import": {
+      "type": "boolean"
+    },
+    "user_1": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::user-1.user-1",
+      "inversedBy": "orders"
+    },
+    "import": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::import.import",
+      "mappedBy": "order"
+    },
+    "order_detail": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::order-detail.order-detail",
+      "mappedBy": "order"
+    }
+  }
+}

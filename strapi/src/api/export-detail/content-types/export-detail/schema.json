@@ -1,0 +1,33 @@
+{
+  "kind": "collectionType",
+  "collectionName": "export_details",
+  "info": {
+    "singularName": "export-detail",
+    "pluralName": "export-details",
+    "displayName": "export_detail",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "export": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::export.export",
+      "inversedBy": "export_details"
+    },
+    "item": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::item.item",
+      "inversedBy": "export_details"
+    },
+    "qty": {
+      "type": "integer"
+    },
+    "description": {
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "kind": "collectionType",
+  "collectionName": "user_1s",
+  "info": {
+    "singularName": "user-1",
+    "pluralName": "user-1s",
+    "displayName": "user_1",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "firstname": {
+      "type": "string"
+    },
+    "lastname": {
+      "type": "string"
+    },
+    "gender": {
+      "type": "string"
+    },
+    "email": {
+      "type": "email"
+    },
+    "password": {
+      "type": "password"
+    },
+    "photo": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "auths": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::auth.auth",
+      "mappedBy": "user_1"
+    },
+    "orders": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::order.order",
+      "mappedBy": "user_1"
+    },
+    "exports": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::export.export",
+      "mappedBy": "export_user"
+    },
+    "ex_approver": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::export.export",
+      "mappedBy": "export_approver"
+    },
+    "borrows": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::borrow.borrow",
+      "mappedBy": "borrow_user"
+    },
+    "approver": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::borrow.borrow",
+      "mappedBy": "borrow_approver"
+    },
+    "user_repair": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::repair.repair",
+      "mappedBy": "repair_user"
+    },
+    "approver_reapir": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::repair.repair",
+      "mappedBy": "reapir_approver"
+    }
+  }
+}
