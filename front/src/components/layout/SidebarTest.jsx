@@ -26,29 +26,33 @@ import CategoryRoundedIcon from '@mui/icons-material/CategoryRounded';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import CreateRoundedIcon from '@mui/icons-material/CreateRounded';
 
-
 const drawerWidth = 270;
 
-// Styled components for the drawer's opened and closed states
 const openedMixin = (theme) => ({
   width: drawerWidth,
   transition: theme.transitions.create('width', {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.enteringScreen,
+    easing: theme.transitions.easing.easeInOut,
+    duration: theme.transitions.duration.standard,
   }),
   overflowX: 'hidden',
+  background: '#1e1e2f', // Modern dark background
+  color: '#d1d5db', // Soft gray text
+  boxShadow: '2px 0 10px rgba(0, 0, 0, 0.3)', // Subtle shadow for depth
 });
 
 const closedMixin = (theme) => ({
   transition: theme.transitions.create('width', {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
+    easing: theme.transitions.easing.easeInOut,
+    duration: theme.transitions.duration.standard,
   }),
   overflowX: 'hidden',
   width: `calc(${theme.spacing(7)} + 1px)`,
   [theme.breakpoints.up('sm')]: {
     width: `calc(${theme.spacing(8)} + 1px)`,
   },
+  background: '#1e1e2f',
+  color: '#d1d5db',
+  boxShadow: '2px 0 10px rgba(0, 0, 0, 0.3)',
 });
 
 const DrawerHeader = styled('div')(({ theme }) => ({
@@ -72,12 +76,10 @@ const Drawer = styled(MuiDrawer, {
 
 export default function Sidebar({ open, handleDrawerToggle }) {
   const theme = useTheme();
-  const location = useLocation(); // Access current route
+  const location = useLocation();
   const [inventoryOpen, setInventoryOpen] = useState(false);
-
   const [selected, setSelected] = useState(0);
 
-  // Update `selected` state based on current route
   useEffect(() => {
     switch (location.pathname) {
       case '/dashboard':
@@ -90,22 +92,28 @@ export default function Sidebar({ open, handleDrawerToggle }) {
       case '/inventory/categories':
       case '/inventory/iteminformation':
         setSelected(1);
-        setInventoryOpen(true); // Ensure submenu is open for inventory paths
+        setInventoryOpen(true);
         break;
-      case '/import':
+      case '/order':
         setSelected(4);
         break;
-      case '/requests':
+      case '/import':
         setSelected(5);
         break;
-      case '/history':
+      case 'repait':
         setSelected(6);
         break;
-      case '/users':
+      case '/requests':
         setSelected(7);
         break;
+      case '/history':
+        setSelected(8);
+        break;
+      case '/users':
+        setSelected(9);
+        break;
       default:
-        setSelected(-1); // Fallback for untracked paths
+        setSelected(-1);
         break;
     }
   }, [location.pathname]);
@@ -115,49 +123,45 @@ export default function Sidebar({ open, handleDrawerToggle }) {
   };
 
   return (
-    <Drawer
-      variant="permanent"
-      open={open}
-      sx={{
-        '& .MuiDrawer-paper': {},
-      }}
-    >
-      {/* Drawer Header */}
-      <DrawerHeader sx={{ position: 'absolute', bottom: 0, display: 'flex', width: '100%', justifyContent: 'center' }}>
-        <IconButton onClick={handleDrawerToggle}>
+    <Drawer variant="permanent" open={open}>
+      <DrawerHeader sx={{ position: 'absolute', bottom: 0, width: '100%', justifyContent: 'center' }}>
+        <IconButton onClick={handleDrawerToggle} sx={{ color: '#d1d5db' }}>
           {open ? <ArrowLeftRoundedIcon /> : <ArrowRightRoundedIcon />}
         </IconButton>
       </DrawerHeader>
 
-      {/* Profile Section */}
       <Profile open={open} />
 
-      {/* <Divider
+      <Divider
         sx={{
-          borderColor: 'black',
+          borderColor: '#ffffff', // Softer divider color
           width: open ? '80%' : '50%',
           margin: '0 auto',
           transition: 'width 0.3s ease',
+          
         }}
-      /> */}
+      />
 
-      {/* Navigation List */}
-      <List sx={{padding: 1, ml: open ? 0 : 0, justifyContent: 'center', display: 'flex', flexDirection: 'column' }}>
+      <List sx={{ padding: 1, ml: open ? 0 : 0, display: 'flex', flexDirection: 'column' }}>
         {/* Dashboard */}
-        <ListItem disablePadding sx={{ ml:0}}>
+        <ListItem disablePadding sx={{ ml: 0 }}>
           <ListItemButton
             selected={selected === 0}
             component={Link}
             to="/dashboard"
             sx={{
-              borderRadius: 1,
-              '&:hover': { backgroundColor: '#bbdefb' },
+              borderRadius: '12px',
+              margin: '4px 8px',
+              backgroundColor: selected === 0 ? '#3b82f6' : 'transparent', // Modern blue for selected
+              color: selected === 0 ? '#fff' : '#d1d5db',
+              '&:hover': { backgroundColor: selected === 0 ? '#3b82f6' : '#2a2a3f' }, // Subtle hover
+              transition: 'all 0.2s ease',
             }}
           >
             <ListItemIcon>
-              <SpaceDashboardRoundedIcon sx={{ color: 'black', ml: -0.5 }} />
+              <SpaceDashboardRoundedIcon sx={{ color: selected === 0 ? '#fff' : '#d1d5db', ml: -1.46 }} />
             </ListItemIcon>
-            <ListItemText primary="Dashboard" sx={{ color: 'black', transition: 'opacity 0.5s ease', opacity: open ? 1 : 0 }} />
+            <ListItemText primary="Dashboard" sx={{ transition: 'opacity 0.3s ease', opacity: open ? 1 : 0 }} />
           </ListItemButton>
         </ListItem>
 
@@ -167,14 +171,18 @@ export default function Sidebar({ open, handleDrawerToggle }) {
             selected={selected === 1}
             onClick={handleInventoryToggle}
             sx={{
-              borderRadius: 1,
-              '&:hover': { backgroundColor: '#bbdefb' },
+              borderRadius: '12px',
+              margin: '4px 8px',
+              backgroundColor: selected === 1 ? '#3b82f6' : 'transparent',
+              color: selected === 1 ? '#fff' : '#d1d5db',
+              '&:hover': { backgroundColor: selected === 1 ? '#3b82f6' : '#2a2a3f' },
+              transition: 'all 0.2s ease',
             }}
           >
             <ListItemIcon>
-              <InventoryIcon sx={{ color: 'black', ml: -0.5  }} />
+              <InventoryIcon sx={{ color: selected === 1 ? '#fff' : '#d1d5db', ml: -1.46 }} />
             </ListItemIcon>
-            <ListItemText primary="Inventory" sx={{ color: 'black', transition: 'opacity 0.5s ease', opacity: open ? 1 : 0 }} />
+            <ListItemText primary="Inventory" sx={{ transition: 'opacity 0.3s ease', opacity: open ? 1 : 0 }} />
             {inventoryOpen ? <ArrowDropUpRoundedIcon /> : <ArrowDropDownRoundedIcon />}
           </ListItemButton>
         </ListItem>
@@ -187,15 +195,19 @@ export default function Sidebar({ open, handleDrawerToggle }) {
               component={Link}
               to="/inventory/items"
               sx={{
-                borderRadius: 1,
+                borderRadius: '12px',
+                margin: '4px 16px',
+                backgroundColor: location.pathname === '/inventory/items' ? '#3b82f6' : 'transparent',
+                color: location.pathname === '/inventory/items' ? '#fff' : '#d1d5db',
+                '&:hover': { backgroundColor: location.pathname === '/inventory/items' ? '#3b82f6' : '#2a2a3f' },
+                transition: 'all 0.2s ease',
                 display: 'flex',
-                justifyContent: 'space-between', // Push icon to the right
-                '&:hover': { backgroundColor: '#e3f2fd' },
+                justifyContent: 'space-between',
               }}
             >
-              <ListItemText primary="Items" sx={{ color: 'black', transition: 'opacity 0.5s ease', opacity: open ? 1 : 0 }} />
-              <ListItemIcon sx={{ minWidth: 'auto' }}> {/* Ensure the icon is not too spaced out */}
-                <PostAddRoundedIcon sx={{ color: 'black', ml: -0.5  }} />
+              <ListItemText primary="Items" sx={{ transition: 'opacity 0.3s ease', opacity: open ? 1 : 0 }} />
+              <ListItemIcon sx={{ minWidth: 'auto' }}>
+                <PostAddRoundedIcon sx={{ color: location.pathname === '/inventory/items' ? '#fff' : '#d1d5db', ml: -1.46 }} />
               </ListItemIcon>
             </ListItemButton>
 
@@ -204,15 +216,19 @@ export default function Sidebar({ open, handleDrawerToggle }) {
               component={Link}
               to="/inventory/unit"
               sx={{
-                borderRadius: 1,
+                borderRadius: '12px',
+                margin: '4px 16px',
+                backgroundColor: location.pathname === '/inventory/unit' ? '#3b82f6' : 'transparent',
+                color: location.pathname === '/inventory/unit' ? '#fff' : '#d1d5db',
+                '&:hover': { backgroundColor: location.pathname === '/inventory/unit' ? '#3b82f6' : '#2a2a3f' },
+                transition: 'all 0.2s ease',
                 display: 'flex',
-                justifyContent: 'space-between', // Push icon to the right
-                '&:hover': { backgroundColor: '#e3f2fd' },
+                justifyContent: 'space-between',
               }}
             >
-              <ListItemText primary="Unit" sx={{ color: 'black', transition: 'opacity 0.5s ease', opacity: open ? 1 : 0 }} />
-              <ListItemIcon sx={{ minWidth: 'auto' }}> {/* Ensure the icon is not too spaced out */}
-                <PostAddRoundedIcon sx={{ color: 'black', ml: -0.5  }} />
+              <ListItemText primary="Unit" sx={{ transition: 'opacity 0.3s ease', opacity: open ? 1 : 0 }} />
+              <ListItemIcon sx={{ minWidth: 'auto' }}>
+                <PostAddRoundedIcon sx={{ color: location.pathname === '/inventory/unit' ? '#fff' : '#d1d5db', ml: -1.46 }} />
               </ListItemIcon>
             </ListItemButton>
 
@@ -221,15 +237,19 @@ export default function Sidebar({ open, handleDrawerToggle }) {
               component={Link}
               to="/inventory/brand"
               sx={{
-                borderRadius: 1,
+                borderRadius: '12px',
+                margin: '4px 16px',
+                backgroundColor: location.pathname === '/inventory/brand' ? '#3b82f6' : 'transparent',
+                color: location.pathname === '/inventory/brand' ? '#fff' : '#d1d5db',
+                '&:hover': { backgroundColor: location.pathname === '/inventory/brand' ? '#3b82f6' : '#2a2a3f' },
+                transition: 'all 0.2s ease',
                 display: 'flex',
-                justifyContent: 'space-between', // Push icon to the right
-                '&:hover': { backgroundColor: '#e3f2fd' },
+                justifyContent: 'space-between',
               }}
             >
-              <ListItemText primary="Brand" sx={{ color: 'black', transition: 'opacity 0.5s ease', opacity: open ? 1 : 0 }} />
-              <ListItemIcon sx={{ minWidth: 'auto' }}> {/* Ensure the icon is not too spaced out */}
-                <PostAddRoundedIcon sx={{ color: 'black', ml: -0.5  }} />
+              <ListItemText primary="Brand" sx={{ transition: 'opacity 0.3s ease', opacity: open ? 1 : 0 }} />
+              <ListItemIcon sx={{ minWidth: 'auto' }}>
+                <PostAddRoundedIcon sx={{ color: location.pathname === '/inventory/brand' ? '#fff' : '#d1d5db', ml: -1.46 }} />
               </ListItemIcon>
             </ListItemButton>
 
@@ -238,15 +258,19 @@ export default function Sidebar({ open, handleDrawerToggle }) {
               component={Link}
               to="/inventory/categories"
               sx={{
-                borderRadius: 1,
+                borderRadius: '12px',
+                margin: '4px 16px',
+                backgroundColor: location.pathname === '/inventory/categories' ? '#3b82f6' : 'transparent',
+                color: location.pathname === '/inventory/categories' ? '#fff' : '#d1d5db',
+                '&:hover': { backgroundColor: location.pathname === '/inventory/categories' ? '#3b82f6' : '#2a2a3f' },
+                transition: 'all 0.2s ease',
                 display: 'flex',
                 justifyContent: 'space-between',
-                '&:hover': { backgroundColor: '#e3f2fd' },
               }}
             >
-              <ListItemText primary="Categories" sx={{ color: 'black', transition: 'opacity 0.5s ease', opacity: open ? 1 : 0 }} />
+              <ListItemText primary="Categories" sx={{ transition: 'opacity 0.3s ease', opacity: open ? 1 : 0 }} />
               <ListItemIcon sx={{ minWidth: 'auto' }}>
-                <CategoryRoundedIcon sx={{ color: 'black', ml: -0.5  }} />
+                <CategoryRoundedIcon sx={{ color: location.pathname === '/inventory/categories' ? '#fff' : '#d1d5db', ml: -1.46 }} />
               </ListItemIcon>
             </ListItemButton>
 
@@ -255,90 +279,153 @@ export default function Sidebar({ open, handleDrawerToggle }) {
               component={Link}
               to="/inventory/iteminformation"
               sx={{
-                borderRadius: 1,
+                borderRadius: '12px',
+                margin: '4px 16px',
+                backgroundColor: location.pathname === '/inventory/iteminformation' ? '#3b82f6' : 'transparent',
+                color: location.pathname === '/inventory/iteminformation' ? '#fff' : '#d1d5db',
+                '&:hover': { backgroundColor: location.pathname === '/inventory/iteminformation' ? '#3b82f6' : '#2a2a3f' },
+                transition: 'all 0.2s ease',
                 display: 'flex',
                 justifyContent: 'space-between',
-                '&:hover': { backgroundColor: '#e3f2fd' },
               }}
             >
-              <ListItemText primary="Item Information" sx={{ color: 'black', transition: 'opacity 0.5s ease', opacity: open ? 1 : 0 }} />
+              <ListItemText primary="Item Information" sx={{ transition: 'opacity 0.3s ease', opacity: open ? 1 : 0 }} />
               <ListItemIcon sx={{ minWidth: 'auto' }}>
-                <DescriptionRoundedIcon sx={{ color: 'black', ml: -0.5  }} />
+                <DescriptionRoundedIcon sx={{ color: location.pathname === '/inventory/iteminformation' ? '#fff' : '#d1d5db', ml: -1.46 }} />
               </ListItemIcon>
             </ListItemButton>
           </List>
         </Collapse>
 
-
-        {/* Import */}
+        {/* Order */}
         <ListItem disablePadding>
           <ListItemButton
             selected={selected === 4}
             component={Link}
-            to="/import"
+            to="/order"
             sx={{
-              borderRadius: 1,
-              '&:hover': { backgroundColor: '#bbdefb' },
+              borderRadius: '12px',
+              margin: '4px 8px',
+              backgroundColor: selected === 4 ? '#3b82f6' : 'transparent',
+              color: selected === 4 ? '#fff' : '#d1d5db',
+              '&:hover': { backgroundColor: selected === 4 ? '#3b82f6' : '#2a2a3f' },
+              transition: 'all 0.2s ease',
             }}
           >
             <ListItemIcon>
-              <CreateRoundedIcon sx={{ color: 'black', ml: -0.5 }} />
+              <CreateRoundedIcon sx={{ color: selected === 4 ? '#fff' : '#d1d5db', ml: -1.46 }} />
             </ListItemIcon>
-            <ListItemText primary="Import" sx={{ color: 'black', transition: 'opacity 0.5s ease', opacity: open ? 1 : 0 }} />
+            <ListItemText primary="Order" sx={{ transition: 'opacity 0.3s ease', opacity: open ? 1 : 0 }} />
+          </ListItemButton>
+        </ListItem>
+
+        {/* Import */}
+        <ListItem disablePadding>
+          <ListItemButton
+            selected={selected === 5}
+            component={Link}
+            to="/import"
+            sx={{
+              borderRadius: '12px',
+              margin: '4px 8px',
+              backgroundColor: selected === 5 ? '#3b82f6' : 'transparent',
+              color: selected === 5 ? '#fff' : '#d1d5db',
+              '&:hover': { backgroundColor: selected === 5 ? '#3b82f6' : '#2a2a3f' },
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <ListItemIcon>
+              <CreateRoundedIcon sx={{ color: selected === 5 ? '#fff' : '#d1d5db', ml: -1.46 }} />
+            </ListItemIcon>
+            <ListItemText primary="Import" sx={{ transition: 'opacity 0.3s ease', opacity: open ? 1 : 0 }} />
+          </ListItemButton>
+        </ListItem>
+
+        {/* Repair */}
+        <ListItem disablePadding>
+          <ListItemButton
+            selected={selected === 6}
+            component={Link}
+            to="/repair"
+            sx={{
+              borderRadius: '12px',
+              margin: '4px 8px',
+              backgroundColor: selected === 6 ? '#3b82f6' : 'transparent',
+              color: selected === 6 ? '#fff' : '#d1d5db',
+              '&:hover': { backgroundColor: selected === 6 ? '#3b82f6' : '#2a2a3f' },
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <ListItemIcon>
+              <CreateRoundedIcon sx={{ color: selected === 5 ? '#fff' : '#d1d5db', ml: -1.46 }} />
+            </ListItemIcon>
+            <ListItemText primary="Repair" sx={{ transition: 'opacity 0.3s ease', opacity: open ? 1 : 0 }} />
           </ListItemButton>
         </ListItem>
 
         {/* Requests */}
         <ListItem disablePadding>
           <ListItemButton
-            selected={selected === 5}
+            selected={selected === 7}
             component={Link}
             to="/requests"
             sx={{
-              borderRadius: 1,
-              '&:hover': { backgroundColor: '#bbdefb' },
+              borderRadius: '12px',
+              margin: '4px 8px',
+              backgroundColor: selected === 7 ? '#3b82f6' : 'transparent',
+              color: selected === 7 ? '#fff' : '#d1d5db',
+              '&:hover': { backgroundColor: selected === 7 ? '#3b82f6' : '#2a2a3f' },
+              transition: 'all 0.2s ease',
             }}
           >
             <ListItemIcon>
-              <MoveToInboxRoundedIcon sx={{ color: 'black', ml: -0.5  }} />
+              <MoveToInboxRoundedIcon sx={{ color: selected === 6 ? '#fff' : '#d1d5db', ml: -1.46 }} />
             </ListItemIcon>
-            <ListItemText primary="Requests" sx={{ color: 'black', transition: 'opacity 0.5s ease', opacity: open ? 1 : 0 }} />
+            <ListItemText primary="Requests" sx={{ transition: 'opacity 0.3s ease', opacity: open ? 1 : 0 }} />
           </ListItemButton>
         </ListItem>
 
         {/* History */}
         <ListItem disablePadding>
           <ListItemButton
-            selected={selected === 6}
+            selected={selected === 8}
             component={Link}
             to="/history"
             sx={{
-              borderRadius: 1,
-              '&:hover': { backgroundColor: '#bbdefb' },
+              borderRadius: '12px',
+              margin: '4px 8px',
+              backgroundColor: selected === 8? '#3b82f6' : 'transparent',
+              color: selected === 8 ? '#fff' : '#d1d5db',
+              '&:hover': { backgroundColor: selected === 8 ? '#3b82f6' : '#2a2a3f' },
+              transition: 'all 0.2s ease',
             }}
           >
             <ListItemIcon>
-              <HistoryIcon sx={{ color: 'black', ml: -0.5  }} />
+              <HistoryIcon sx={{ color: selected === 7 ? '#fff' : '#d1d5db', ml: -1.46 }} />
             </ListItemIcon>
-            <ListItemText primary="History" sx={{ color: 'black', transition: 'opacity 0.5s ease', opacity: open ? 1 : 0 }} />
+            <ListItemText primary="History" sx={{ transition: 'opacity 0.3s ease', opacity: open ? 1 : 0 }} />
           </ListItemButton>
         </ListItem>
 
         {/* Users */}
         <ListItem disablePadding>
           <ListItemButton
-            selected={selected === 7}
+            selected={selected === 9}
             component={Link}
             to="/users"
             sx={{
-              borderRadius: 1,
-              '&:hover': { backgroundColor: '#bbdefb' },
+              borderRadius: '12px',
+              margin: '4px 8px',
+              backgroundColor: selected === 9 ? '#3b82f6' : 'transparent',
+              color: selected === 9 ? '#fff' : '#d1d5db',
+              '&:hover': { backgroundColor: selected === 9 ? '#3b82f6' : '#2a2a3f' },
+              transition: 'all 0.2s ease',
             }}
           >
             <ListItemIcon>
-              <PersonRoundedIcon sx={{ color: 'black', ml: -0.5   }} />
+              <PersonRoundedIcon sx={{ color: selected === 8 ? '#fff' : '#d1d5db', ml: -1.46 }} />
             </ListItemIcon>
-            <ListItemText primary="Users" sx={{ color: 'black', transition: 'opacity 0.5s ease', opacity: open ? 1 : 0 }} />
+            <ListItemText primary="Users" sx={{ transition: 'opacity 0.3s ease', opacity: open ? 1 : 0 }} />
           </ListItemButton>
         </ListItem>
       </List>

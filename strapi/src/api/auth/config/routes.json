@@ -1,0 +1,13 @@
+[
+    {
+      "method": "POST",
+      "path": "/auth/request-otp",
+      "handler": "otp.requestOTP"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/verify-otp",
+      "handler": "otp.verifyOTP"
+    }
+  ]
+  

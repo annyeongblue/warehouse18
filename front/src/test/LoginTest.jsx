@@ -1,23 +1,28 @@
 import React, { useState } from 'react';
-import { Box, Typography, TextField, Link, InputAdornment, IconButton } from '@mui/material';
+import { 
+  Box, 
+  Typography, 
+  TextField, 
+  Link, 
+  InputAdornment, 
+  IconButton,
+  Fade
+} from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/common/Button';
 
-
 const SignIn = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
-  const handleTogglePassword = () => {
-    setShowPassword((prev) => !prev);
-  };
-
+  const handleTogglePassword = () => setShowPassword((prev) => !prev);
+  
   const handleSubmit = async (event) => {
     event.preventDefault();
-
     const email = event.target.email.value;
     const password = event.target.password.value;
 
@@ -27,53 +32,68 @@ const SignIn = () => {
         password
       });
 
-      console.log('Server Response:', response.data); // Log to see the structure
-
       if (response.status === 200) {
         alert(response.data.message || 'Login successful!');
         event.target.reset();
         navigate('/dashboard');
       }
     } catch (error) {
-      console.error('Error Response:', error.response); // Log any error details
+      console.error('Error Response:', error.response);
       alert('An error occurred, please try again.');
     }
   };
 
   return (
     <Box
-  sx={{
-    display: 'flex',
-    flexDirection: { xs: 'column', md: 'row' },
-    width: '100%', // Ensure it takes full width of its container
-    maxWidth: { xs: '100%', sm: '600px', md: '700px' }, // Adjust based on screen size
-    borderRadius: '12px',
-    boxShadow: 3,
-    overflow: 'hidden',
-  }}
->
-
-      {/* Right Section */}
-      <Box
-        sx={{
-          flex: 1,
-          backgroundColor: '#ffffff',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          padding: '40px',
-        }}
-      >
-        <Box sx={{ display: 'grid', gap: 4, textAlign: 'center' }}>
-          <Typography variant="h4" sx={{ fontWeight: 'bold', fontSize: '3vh' }}>
-            Sign in
-          </Typography>
-          <Typography>
-            To continue!
-          </Typography>
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        // minHeight: '100vh',
+        // background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+        padding: 2
+      }}
+    >
+      <Fade in={true} timeout={800}>
+        <Box
+          sx={{
+            width: '100%',
+            maxWidth: '420px',
+            background: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '16px',
+            boxShadow: '0 8px 32px rgba(31, 38, 135, 0.15)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.18)',
+            padding: 4,
+            transition: 'transform 0.3s ease-in-out',
+            transform: isHovered ? 'scale(1.02)' : 'scale(1)',
+          }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          <Box sx={{ textAlign: 'center', mb: 4 }}>
+            <Typography 
+              variant="h4" 
+              sx={{ 
+                fontWeight: 700, 
+                background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                mb: 1
+              }}
+            >
+              Welcome Back
+            </Typography>
+            <Typography 
+              variant="body2" 
+              sx={{ color: 'text.secondary' }}
+            >
+              Sign in to continue your journey
+            </Typography>
+          </Box>
 
           <form onSubmit={handleSubmit}>
-            <Box sx={{ display: 'grid', gap: 4, textAlign: 'center' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <TextField
                 label="Email"
                 name="email"
@@ -81,7 +101,17 @@ const SignIn = () => {
                 required
                 fullWidth
                 sx={{
-                  '& .MuiOutlinedInput-root': { borderRadius: 4 }
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '12px',
+                    background: 'rgba(245, 245, 245, 0.5)',
+                    transition: 'all 0.3s',
+                    '&:hover': {
+                      background: 'rgba(245, 245, 245, 0.8)',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'text.secondary',
+                  },
                 }}
               />
 
@@ -93,37 +123,85 @@ const SignIn = () => {
                 required
                 fullWidth
                 sx={{
-                  '& .MuiOutlinedInput-root': { borderRadius: 4 }
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '12px',
+                    background: 'rgba(245, 245, 245, 0.5)',
+                    transition: 'all 0.3s',
+                    '&:hover': {
+                      background: 'rgba(245, 245, 245, 0.8)',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'text.secondary',
+                  },
                 }}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton onClick={handleTogglePassword} edge="end">
+                      <IconButton 
+                        onClick={handleTogglePassword} 
+                        edge="end"
+                        sx={{ 
+                          color: 'text.secondary',
+                          '&:hover': { color: 'primary.main' }
+                        }}
+                      >
                         {showPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
                     </InputAdornment>
                   ),
                 }}
               />
+
               <Button
                 type="submit"
-                variant="outlined"
-                color="primary"
-                sx={{ '&:hover': { backgroundColor: 'lightblue' } }}
+                variant="contained"
+                fullWidth
+                sx={{
+                  borderRadius: '12px',
+                  padding: '12px',
+                  background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                  boxShadow: '0 4px 15px rgba(33, 150, 243, 0.4)',
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  transition: 'all 0.3s',
+                  '&:hover': {
+                    background: 'linear-gradient(45deg, #1976D2 30%, #1EB3D2 90%)',
+                    boxShadow: '0 6px 20px rgba(33, 150, 243, 0.6)',
+                    transform: 'translateY(-2px)',
+                  },
+                }}
               >
-                Login
+                Sign In
               </Button>
+
+              {/* <Typography 
+                variant="body2" 
+                sx={{ 
+                  textAlign: 'center', 
+                  color: 'text.secondary' 
+                }}
+              >
+                Don't have an account?{' '}
+                <Link 
+                  href="/register" 
+                  sx={{ 
+                    color: 'primary.main',
+                    textDecoration: 'none',
+                    '&:hover': { 
+                      textDecoration: 'underline',
+                      color: 'primary.dark' 
+                    }
+                  }}
+                >
+                  Sign Up
+                </Link>
+              </Typography> */}
             </Box>
           </form>
-
-          <Typography variant="body2" sx={{ mb: 2, textAlign: 'center' }}>
-            Don't have an account?{' '}
-            {/* <Link href="/register"underline="hover" color="primary">
-              Sign Up
-            </Link> */}
-          </Typography>
         </Box>
-      </Box>
+      </Fade>
     </Box>
   );
 };

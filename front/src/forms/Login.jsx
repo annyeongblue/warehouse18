@@ -1,79 +1,49 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { Button, Container, Typography, Box, Avatar } from "@mui/material";
-import GoogleIcon from "@mui/icons-material/Google";
-
-const STRAPI_URL = "http://localhost:1337"; // Change this in production
+import React, { useState } from 'react';
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 
 const App = () => {
   const [user, setUser] = useState(null);
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.log("No token found, redirecting to login...");
-        // Redirect to login page or show a login prompt
-        return;
-      }
+  const handleLogin = async (response) => {
+    const token = response.credential;  // This should be the token from Google OAuth
+    console.log('Google Token:', token);  // Debugging line to ensure the token is correct
   
-      try {
-        const response = await axios.get(`${STRAPI_URL}/api/users/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setUser(response.data);
-      } catch (error) {
-        console.error("Failed to fetch user:", error);
-        if (error.response?.status === 401) {
-          console.log("Token is invalid or expired, redirecting to login...");
-          localStorage.removeItem("token"); // Remove invalid token
-          // Redirect to login page or show a login prompt
-        }
-      }
-    };
-  
-    fetchUser();
-  }, []);
-
-  // Google Login
-  const handleLogin = () => {
-    window.open(`${STRAPI_URL}/api/connect/google`, "_self");
+    // Send the token to Strapi for verification
+    fetch('http://localhost:1337/api/connect/google/callback', {
+      method: 'GET', // Use GET for the callback route
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(data); // Authenticated user data
+      })
+      .catch((error) => console.error('Error:', error));
   };
+  
+  
 
-  // Logout
   const handleLogout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
+    localStorage.removeItem('jwt');
     setUser(null);
   };
 
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ textAlign: "center", mt: 5 }}>
-        <Typography variant="h4" gutterBottom>
-          Google Auth with Strapi
-        </Typography>
+    <GoogleOAuthProvider clientId="112296741986-89e0pq0c0cat277c7bg1g6csnbgl0sq5.apps.googleusercontent.com">
+      <div>
+        <h1>Google Login with Strapi</h1>
 
-        {user ? (
-          <Box>
-            <Avatar src={user.picture} sx={{ width: 80, height: 80, mx: "auto" }} />
-            <Typography variant="h6">{user.username}</Typography>
-            <Button variant="contained" color="error" onClick={handleLogout}>
-              Logout
-            </Button>
-          </Box>
+        {!user ? (
+          <GoogleLogin onSuccess={handleLogin} onError={() => console.log('Login Failed')} />
         ) : (
-          <Button
-            variant="contained"
-            startIcon={<GoogleIcon />}
-            color="primary"
-            onClick={handleLogin}
-          >
-            Login with Google
-          </Button>
+          <>
+            <p>Welcome, {user.username}!</p> {/* Assuming user data includes a 'username' */}
+            <button onClick={handleLogout}>Logout</button>
+          </>
         )}
-      </Box>
-    </Container>
+      </div>
+    </GoogleOAuthProvider>
   );
 };
 

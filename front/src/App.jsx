@@ -22,10 +22,16 @@ import Import from './pages/Import';
 import TypeSelected from './components/common/TypeSelected'
 import Brand from './pages/Brand'
 import Unit from './pages/Unit'
+import Order from './pages/Order';
+import UProfile from './components/common/UProfile'
+import OrderDetails from './pages/Order_Details';
+import Repair from './pages/Repair';
 
 import GoogleAuth from '../src/test/GoogleAuth'
 
 import SideTest from './components/layout/SidebarTest';
+
+import GoogleAuthCallback from './callback';
 
 //Test Form
 import LogT from './test/LoginTest';
@@ -84,13 +90,16 @@ const App = () => {
           <Route path="/" element={<Welcome />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/history" element={<History />} />
+          <Route path="/auth/callback/google" element={<GoogleAuthCallback />} />
 
           <Route path="/requests" element={<Requests />} />
           <Route path="/search" element={<Search />} />
           <Route path="/sidetest" element={<SideTest />} />
           <Route path="/navbar" element={<Navbar open={open} setOpen={setOpen} />} /> Pass props to Navbar
+
           <Route path="/Login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          
           <Route path="/searchbar" element={<SearchBar />} />
           <Route path="/user" element={<User />} />
           <Route path="/logt" element={<LogT />} />
@@ -99,7 +108,11 @@ const App = () => {
           <Route path="/users" element={<Users />} />
           <Route path="/import" element={<Import />} />
           <Route path="/type" element={<TypeSelected />} />
+          <Route path="/order" element={<Order />} />
           <Route path="/google" element={<GoogleAuth />} />
+          <Route path="/uprofile" element={<UProfile />} />
+          <Route path="/order_details" element={<OrderDetails />} />
+          <Route path="/repair" element={<Repair />} />
 
           <Route path='/auth/google/callback' element={<Callback />} />
           

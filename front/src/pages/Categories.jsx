@@ -1,48 +1,61 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
-  TableHead,
   TableRow,
   TablePagination,
-  TextField,
+  Paper,
 } from '@mui/material';
 import SearchBar from '../components/common/SearchBar';
-import Button from '../components/common/Button';
+import { ModernBox, ModernTextField, ModernButton, ModernTableContainer, ModernTableHead, ModernTableRow } from '../styles/styles';
+import axios from 'axios';
 
-function AddCategories({ categoryName, setCategoryName, categoryDescription, setCategoryDescription, categories, setCategories }) {
-  const handleAddCategory = () => {
-    if (!categoryName || !categoryDescription) {
-      alert("Please fill out all fields.");
+const API_URL = 'http://localhost:1337/api/categories'
+const API_TOKEN = import.meta.env.VITE_API_TOKEN;
+
+function AddCategories({
+  categoryName,
+  setCategoryName,
+  categoryDescription,
+  setCategoryDescription,
+  categories,
+  setCategories,
+  fetchCategories,
+}) {
+  const handleAddCategory = async () => {
+    if (!categoryName) {
+      alert('Please fill out all fields.');
       return;
     }
 
-    const categoryExists = categories.some(
-      (category) => category.name.toLowerCase() === categoryName.toLowerCase()
-    );
-    if (categoryExists) {
-      alert("Category already exists.");
-      return;
+    try {
+      const response = await axios.post(
+        API_URL,
+        { data: { name: categoryName }},
+        { headers: { Authorization: `Bearer ${API_TOKEN}`}}
+      );
+
+      const newCategory = {
+        id: response.data.data.id,
+        name: response.data.data.name || categoryName,
+      }
+      setCategories([newCategory, ...categories]);
+      setCategoryName('');
+      setCategoryDescription('');
+    } catch (err) {
+      alert(`Error adding category: ${err.response?.data?.error?.message || err.message}`);
     }
-
-    const newCategory = {
-      id: categories.length + 1,
-      name: categoryName,
-      des: categoryDescription,
-    };
-
-    setCategories([...categories, newCategory]);
-    setCategoryName('');
-    setCategoryDescription('');
   };
 
   return (
-    <Button variant='outlined' onClick={handleAddCategory} sx={{ width: '160px', borderRadius: '13px', mb: 3, mt: 3 }}>
+    <ModernButton
+      variant="contained"
+      onClick={handleAddCategory}
+    >
       Add Category
-    </Button>
+    </ModernButton>
   );
 }
 
@@ -51,43 +64,85 @@ const Categories = () => {
   const [page, setPage] = useState(0);
   const [categoryName, setCategoryName] = useState('');
   const [categoryDescription, setCategoryDescription] = useState('');
-  const [categories, setCategories] = useState([
-    { id: 1, name: 'Laptop', des: 10 },
-    { id: 2, name: 'Keyboard', des: 50 },
-    // Example categories
-  ]);
-  const [searchQuery, setSearchQuery] = useState(''); // State for search query
+  const [categories, setCategories] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [error, setError] = useState(null);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await axios.get(API_URL, {
+        headers: { Authorization: `Bearer ${API_TOKEN}`},
+      });
+      const data = response.data.data;
+      const formattedData = data.map((categories) => ({
+        id: categories.id,
+        name: categories.name,
+      }));
+      setCategories(formattedData);
+    } catch (err) {
+      setError(err.response?.data?.error?.message || err.message);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   const handleChangePage = (event, newPage) => setPage(newPage);
-  const handleChangeRowsPerPage = (event) => setRowsPerPage(parseInt(event.target.value, 10));
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
-  // Filter categories based on the search query
   const filteredCategories = categories.filter((category) =>
     category.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <Box>
-      {/* Pass searchQuery and setSearchQuery to SearchBar */}
-      <SearchBar search={searchQuery} setSearch={setSearchQuery} label="Search for Category" />
+    <ModernBox sx={{ minHeight: '100vh' }}>
 
-      <Box>
-        <TextField
+      {/* Form */}
+      <Paper
+        sx={{
+          padding: 3,
+          borderRadius: '16px',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
+          background: '#fff',
+          mb: 4,
+        }}
+      >
+        <ModernTextField
           autoFocus
           margin="dense"
-          label="Category"
+          label="Category Name"
           fullWidth
           variant="outlined"
           value={categoryName}
           onChange={(e) => setCategoryName(e.target.value)}
+          sx={{
+            mb: 2,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '12px',
+              background: '#fafafa',
+            },
+            '& .MuiInputLabel-root': { color: '#64748b' },
+          }}
         />
-        <TextField
-          margin="dense"
+        <ModernTextField
+          margin="dense"dxf
           label="Description"
           fullWidth
           variant="outlined"
           value={categoryDescription}
           onChange={(e) => setCategoryDescription(e.target.value)}
+          sx={{
+            mb: 2,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '12px',
+              background: '#fafafa',
+            },
+            '& .MuiInputLabel-root': { color: '#64748b' },
+          }}
         />
         <AddCategories
           categoryName={categoryName}
@@ -95,32 +150,61 @@ const Categories = () => {
           categoryDescription={categoryDescription}
           setCategoryDescription={setCategoryDescription}
           categories={categories}
-          setCategories={setCategories}/>
+          setCategories={setCategories}
+        />
+      </Paper>
+
+      <Box sx={{ mb: 4 }}>
+        <SearchBar
+          search={searchQuery}
+          setSearch={setSearchQuery}
+          label="Search for Category"
+          sx={{
+            maxWidth: '400px',
+            background: '#fff',
+            borderRadius: '12px',
+            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
+          }}
+        />
       </Box>
 
       {/* Categories Table */}
-      <TableContainer>
+      <ModernTableContainer>
         <Table>
-          <TableHead>
+          <ModernTableHead>
             <TableRow>
               <TableCell>ID</TableCell>
               <TableCell>Category</TableCell>
-              <TableCell>Description</TableCell>
+              {/* <TableCell>Description</TableCell> */}
             </TableRow>
-          </TableHead>
+          </ModernTableHead>
           <TableBody>
-            {filteredCategories
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((category) => (
-                <TableRow key={category.id}>
-                  <TableCell>{category.id}</TableCell>
-                  <TableCell>{category.name}</TableCell>
-                  <TableCell>{category.des}</TableCell>
-                </TableRow>
-              ))}
+            {error ? (
+              <ModernTableRow>
+                <TableCell colSpan={3} align='center'>
+                  Error: {error}
+                </TableCell>
+              </ModernTableRow>
+            ) : filteredCategories.length > 0 ? (
+              filteredCategories
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((category) => (
+                  <ModernTableRow key={category.id}>
+                    <TableCell>{category.id}</TableCell>
+                    <TableCell>{category.name}</TableCell>
+                    {/* <TableCell>{category.des}</TableCell> */}
+                  </ModernTableRow>
+                ))
+              ) : (
+                <ModernTableRow>
+                  <TableCell>
+                    No units found-add some above!
+                  </TableCell>
+                </ModernTableRow>
+              )}
           </TableBody>
         </Table>
-      </TableContainer>
+      </ModernTableContainer>
 
       {/* Pagination */}
       <TablePagination
@@ -131,8 +215,15 @@ const Categories = () => {
         page={page}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
+        sx={{
+          mt: 2,
+          background: '#fff',
+          borderRadius: '12px',
+          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
+          '& .MuiTablePagination-toolbar': { color: '#64748b' },
+        }}
       />
-    </Box>
+    </ModernBox>
   );
 };
 

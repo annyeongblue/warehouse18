@@ -1,39 +1,36 @@
-import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 
-const STRAPI_URL = "http://localhost:1337"; // Update if needed
-
-const Callback = () => {
+const GoogleAuthCallback = () => {
+  const [auth, setAuth] = useState(null);
+  const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const params = new URLSearchParams(window.location.search);
-      const accessToken = params.get("access_token");
+    const query = location.search;
+    axios
+      .get(`http://localhost:1337/api/auth/google/callback${query}`)
+      .then((res) => {
+        setAuth(res.data);
+        localStorage.setItem("jwt", res.data.jwt); // Store JWT in localStorage
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+        navigate("/dashboard"); // Redirect to home
+      })
+      .catch((err) => console.error("Error:", err));
+  }, [location, navigate]);
 
-      if (accessToken) {
-        try {
-          // Fetch user info from Strapi’s default users API
-          const response = await axios.get(`${STRAPI_URL}/api/users/me`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          });
-
-          // Store user data in localStorage
-          localStorage.setItem("user", JSON.stringify(response.data));
-          localStorage.setItem("token", accessToken);
-
-          navigate("/");
-        } catch (error) {
-          console.error("Auth error:", error);
-        }
-      }
-    };
-
-    fetchUser();
-  }, [navigate]);
-
-  return <h2>Authenticating...</h2>;
+  return (
+    <div style={{ textAlign: "center", marginTop: "50px" }}>
+      <h2>{auth ? "Authentication Successful" : "Processing..."}</h2>
+      {auth && (
+        <>
+          <p>JWT: {auth.jwt}</p>
+          <p>User: {auth.user.email}</p>
+        </>
+      )}
+    </div>
+  );
 };
 
-export default Callback;
+export default GoogleAuthCallback;

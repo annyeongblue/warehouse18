@@ -1,62 +1,83 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import {
-  Box,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TablePagination,
-  TextField,
 } from '@mui/material';
 import SearchBar from '../components/common/SearchBar';
-import Button from '../components/common/Button';
+import { ModernBox, ModernButton, ModernTextField, ModernTableContainer, ModernTableHead, ModernTableRow, ModernPaper } from '../styles/styles';
 
-function AddUnit({ unitName, setUnitName, unitDescription, setUnitDescription, units, setUnits }) {
-  const handleAddUnit = () => {
-    if (!unitName || !unitDescription) {
-      alert("Please fill out all fields.");
+const API_URL = 'http://localhost:1337/api/units';
+const API_TOKEN = import.meta.env.VITE_API_TOKEN;
+
+function AddUnit({ unitName, setUnitName, unitDescription, setUnitDescription, fetchUnits, units, setUnits }) {
+  const handleAddUnit = async () => {
+    if (!unitName) {
+      alert("Please fill out the unit.");
       return;
     }
 
-    const unitExists = units.some(
-      (unit) => unit.name.toLowerCase() === unitName.toLowerCase()
-    );
-    if (unitExists) {
-      alert("Unit already exists.");
-      return;
+    try {
+      const response = await axios.post(
+        API_URL,
+        { data: { name: unitName, description: unitDescription } }, // Strapi expects "data" wrapper
+        { headers: { Authorization: `Bearer ${API_TOKEN}` } }
+      );
+
+      const newUnit = {
+        id: response.data.data.id,
+        name: response.data.data.name || unitName,
+        description: response.data.data.description || unitDescription,
+      };
+      setUnits([newUnit, ...units]);
+      setUnitName('');
+      setUnitDescription('');
+      // fetchUnits(); // Refresh the list
+    } catch (err) {
+      alert(`Error adding unit: ${err.response?.data?.error?.message || err.message}`);
     }
-
-    const newUnit = {
-      id: units.length + 1,
-      name: unitName,
-      description: unitDescription,
-    };
-
-    setUnits([...units, newUnit]);
-    setUnitName('');
-    setUnitDescription('');
   };
 
   return (
-    <Button variant='outlined' onClick={handleAddUnit} sx={{ width: '160px', borderRadius: '13px', mb: 3, mt: 3 }}>
+    <ModernButton variant='outlined' onClick={handleAddUnit} sx={{ width: '160px', borderRadius: '13px', mb: 3, mt: 3 }}>
       Add Unit
-    </Button>
+    </ModernButton>
   );
 }
+
+// function
 
 const Units = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [page, setPage] = useState(0);
   const [unitName, setUnitName] = useState('');
   const [unitDescription, setUnitDescription] = useState('');
-  const [units, setUnits] = useState([
-    { id: 1, name: 'Laptop', description: 10 },
-    { id: 2, name: 'Keyboard', description: 50 },
-    // Example units
-  ]);
+  const [error, setError] = useState(null);
+  const [units, setUnits] = useState([]);
   const [searchQuery, setSearchQuery] = useState(''); // State for search query
+
+  const fetchUnits = async () => {
+    try {
+      const response = await axios.get(API_URL, {
+        headers: { Authorization: `Bearer ${API_TOKEN}`},
+      });
+      const data = response.data.data;
+      const formattedData = data.map((unit) => ({
+        id: unit.id,
+        name: unit.name,
+        description: unit.description,
+      }));
+      setUnits(formattedData);
+    } catch (err) {
+      setError(err.response?.data?.error?.message || err.message);
+    }
+  };
+
+  useEffect(() => {
+    fetchUnits();
+  }, []);
 
   const handleChangePage = (event, newPage) => setPage(newPage);
   const handleChangeRowsPerPage = (event) => setRowsPerPage(parseInt(event.target.value, 10));
@@ -67,12 +88,9 @@ const Units = () => {
   );
 
   return (
-    <Box>
-      {/* Pass searchQuery and setSearchQuery to SearchBar */}
-      <SearchBar search={searchQuery} setSearch={setSearchQuery} label="Search for Unit" />
-
-      <Box>
-        <TextField
+    <ModernBox>
+      <ModernPaper sx={{ padding: 3, borderRadius: '16px', background: '#fff', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)', mb: 3 }}>
+        <ModernTextField
           autoFocus
           margin="dense"
           label="Unit"
@@ -81,7 +99,7 @@ const Units = () => {
           value={unitName}
           onChange={(e) => setUnitName(e.target.value)}
         />
-        <TextField
+        <ModernTextField
           margin="dense"
           label="Description"
           fullWidth
@@ -96,32 +114,49 @@ const Units = () => {
           setUnitDescription={setUnitDescription}
           units={units}
           setUnits={setUnits}
+          // fetchUnits={fetchUnits}
         />
-      </Box>
+      </ModernPaper>
+
+      <SearchBar search={searchQuery} setSearch={setSearchQuery} label="Search for Unit" />
 
       {/* Units Table */}
-      <TableContainer>
+      <ModernTableContainer>
         <Table>
-          <TableHead>
-            <TableRow>
+          <ModernTableHead>
+            <ModernTableRow>
               <TableCell>ID</TableCell>
               <TableCell>Unit</TableCell>
-              <TableCell>Description</TableCell>
-            </TableRow>
-          </TableHead>
+              {/* <TableCell>Description</TableCell> */}
+            </ModernTableRow>
+          </ModernTableHead>
           <TableBody>
-            {filteredUnits
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((unit) => (
-                <TableRow key={unit.id}>
-                  <TableCell>{unit.id}</TableCell>
-                  <TableCell>{unit.name}</TableCell>
-                  <TableCell>{unit.description}</TableCell>
-                </TableRow>
-              ))}
+            {error ? (
+              <ModernTableRow>
+                <TableCell colSpan={3} align='center'>
+                  Error: {error}
+                </TableCell>
+              </ModernTableRow>
+            ) : filteredUnits.length > 0 ? (
+              filteredUnits
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((unit) => (
+                  <ModernTableRow key={unit.id}>
+                    <TableCell>{unit.id}</TableCell>
+                    <TableCell>{unit.name}</TableCell>
+                    {/* <TableCell>{unit.description}</TableCell> */}
+                  </ModernTableRow>
+                ))
+              ) : (
+                <ModernTableRow>
+                  <TableCell colSpan={3} align='center'>
+                    No units found-add some above!
+                  </TableCell>
+                </ModernTableRow>
+              )}
           </TableBody>
         </Table>
-      </TableContainer>
+      </ModernTableContainer>
 
       {/* Pagination */}
       <TablePagination
@@ -133,7 +168,7 @@ const Units = () => {
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
-    </Box>
+    </ModernBox>
   );
 };
 

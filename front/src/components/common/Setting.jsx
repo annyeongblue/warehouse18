@@ -30,7 +30,7 @@ export default function Setting() {
           <AccountCircleIcon />
         {/* </Badge> */}
       </IconButton>
-      <p>Profile</p>
+      <p><a href='/uprofile'>Profile</a></p>
       </MenuItem>
     </Menu>
   )

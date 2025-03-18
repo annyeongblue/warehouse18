@@ -575,6 +575,7 @@ export interface ApiBorrowBorrow extends Struct.CollectionTypeSchema {
 export interface ApiBrandBrand extends Struct.CollectionTypeSchema {
   collectionName: 'brands';
   info: {
+    description: '';
     displayName: 'brand';
     pluralName: 'brands';
     singularName: 'brand';
@@ -583,7 +584,6 @@ export interface ApiBrandBrand extends Struct.CollectionTypeSchema {
     draftAndPublish: true;
   };
   attributes: {
-    brand_name: Schema.Attribute.String;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -591,6 +591,7 @@ export interface ApiBrandBrand extends Struct.CollectionTypeSchema {
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::brand.brand'> &
       Schema.Attribute.Private;
+    name: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -614,7 +615,7 @@ export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     description: Schema.Attribute.String;
-    items: Schema.Attribute.Relation<'oneToMany', 'api::item.item'>;
+    item: Schema.Attribute.Relation<'oneToMany', 'api::item.item'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -818,6 +819,7 @@ export interface ApiItemInformationItemInformation
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    description: Schema.Attribute.String;
     item: Schema.Attribute.Relation<'manyToOne', 'api::item.item'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
@@ -882,6 +884,12 @@ export interface ApiItemItem extends Struct.CollectionTypeSchema {
     publishedAt: Schema.Attribute.DateTime;
     qty: Schema.Attribute.Integer;
     type: Schema.Attribute.String;
+    typee: Schema.Attribute.Enumeration<
+      [
+        'a \u0EC0\u0E9A\u0EB5\u0E81\u0EC0\u0E84\u0EB7\u0EC8\u0EAD\u0E87\u0EC3\u0E8A\u0EC9\u0E97\u0EBB\u0EC8\u0EA7\u0EC4\u0E9B',
+        'b \u0EA2\u0EB7\u0EA1\u0EAD\u0EB8\u0E9B\u0EB0\u0E81\u0EAD\u0E99',
+      ]
+    >;
     unit: Schema.Attribute.Relation<'manyToOne', 'api::unit.unit'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -1065,17 +1073,19 @@ export interface ApiTestTest extends Struct.CollectionTypeSchema {
 export interface ApiUnitUnit extends Struct.CollectionTypeSchema {
   collectionName: 'units';
   info: {
+    description: '';
     displayName: 'unit';
     pluralName: 'units';
     singularName: 'unit';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    description: Schema.Attribute.String;
     items: Schema.Attribute.Relation<'oneToMany', 'api::item.item'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::unit.unit'> &

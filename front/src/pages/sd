@@ -1,0 +1,5 @@
+
+
+http://localhost:1337/api/items?populate[0]=category&populate[1]=brand&populate[2]=unit&populate[3]=item_informations
+
+http://localhost:1337/api/item-informations?populate=item

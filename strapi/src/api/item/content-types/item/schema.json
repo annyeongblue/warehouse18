@@ -23,12 +23,6 @@
     "description": {
       "type": "string"
     },
-    "category": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::category.category",
-      "inversedBy": "items"
-    },
     "unit": {
       "type": "relation",
       "relation": "manyToOne",
@@ -70,6 +64,19 @@
       "relation": "oneToMany",
       "target": "api::borrow-detail.borrow-detail",
       "mappedBy": "item"
+    },
+    "category": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::category.category",
+      "inversedBy": "item"
+    },
+    "typee": {
+      "type": "enumeration",
+      "enum": [
+        "a ເບີກເຄື່ອງໃຊ້ທົ່ວໄປ",
+        "b ຢືມອຸປະກອນ"
+      ]
     }
   }
 }
