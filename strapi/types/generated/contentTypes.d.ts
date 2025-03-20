@@ -920,7 +920,6 @@ export interface ApiOrderDetailOrderDetail extends Struct.CollectionTypeSchema {
       'api::order-detail.order-detail'
     > &
       Schema.Attribute.Private;
-    order: Schema.Attribute.Relation<'manyToOne', 'api::order.order'>;
     publishedAt: Schema.Attribute.DateTime;
     qty: Schema.Attribute.Integer;
     updatedAt: Schema.Attribute.DateTime;
@@ -951,7 +950,7 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::order.order'> &
       Schema.Attribute.Private;
-    order_detail: Schema.Attribute.Relation<
+    order_details: Schema.Attribute.Relation<
       'oneToMany',
       'api::order-detail.order-detail'
     >;
@@ -995,7 +994,6 @@ export interface ApiRepairDetailRepairDetail
     publishedAt: Schema.Attribute.DateTime;
     qty: Schema.Attribute.Integer;
     reapir_part: Schema.Attribute.String;
-    repair: Schema.Attribute.Relation<'manyToOne', 'api::repair.repair'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

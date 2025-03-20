@@ -4,8 +4,11 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableContainer,
+  TableHead,
   TableRow,
   TablePagination,
+  TextField,
   Button,
   FormControl,
   InputLabel,
@@ -23,42 +26,33 @@ import axios from 'axios';
 const API_URL = 'http://localhost:1337/api/imports';
 const API_TOKEN = import.meta.env.VITE_API_TOKEN;
 
-const getCurrentDate = () => new Date().toISOString().split('T')[0];
+const getCurrentData = () => new Date().toISOString().split('T')[0];
 
-function AddImport({ imports, setImports, newImport, setNewImport }) {
-  const handleAddImport = async () => {
+function AddOrder({ imports, setImport, newImport, setNewImport }) {
+  const handleAddOrder = () => {
     const { status, description } = newImport;
     if (!status) {
       alert("Please fill out required fields.");
       return;
     }
 
-    const importExists = imports.some(
-      (imp) => imp.description && imp.description.toLowerCase() === description.toLowerCase()
+    const orderExists = imports.some(
+      (order) => order.description && order.description.toLowerCase() === description.toLowerCase()
     );
-    if (importExists) {
-      alert("Import already exists.");
+    if (orderExists) {
+      alert("Order already exists.");
       return;
     }
 
-    try {
-      const response = await axios.post(
-        API_URL,
-        { data: { ...newImport, date: getCurrentDate() } },
-        { headers: { Authorization: `Bearer ${API_TOKEN}` } }
-      );
-      setImports([...imports, response.data.data]);
-      setNewImport({ date: '', status: '', description: '', check_import: false, user_1: '' });
-    } catch (err) {
-      console.error('Error adding import:', err);
-      alert('Failed to add import.');
-    }
+    const newImportData = { ...newImport, id: imports.length + 1, date: getCurrentData() };
+    setImport([...imports, newImportData]);
+    setNewImport({ date: '', status: '', description: '', check_import: false, user_1: '' });
   };
 
   return (
     <ModernButton
       variant="contained"
-      onClick={handleAddImport}
+      onClick={handleAddOrder}
       sx={{
         width: '160px',
         borderRadius: '20px',
@@ -68,23 +62,23 @@ function AddImport({ imports, setImports, newImport, setNewImport }) {
         '&:hover': { background: 'linear-gradient(45deg, #1565c0, #2196f3)' },
       }}
     >
-      Add Import
+      Add Order
     </ModernButton>
   );
 }
 
-function Imports() {
+const imports = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [page, setPage] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [newImport, setNewImport] = useState({
-    date: getCurrentDate(),
+    date: getCurrentData(),
     status: '',
     description: '',
     check_import: false,
     user_1: '',
   });
-  const [imports, setImports] = useState([]);
+  const [imports, setImport] = useState([]);
   const [editId, setEditId] = useState(null);
   const navigate = useNavigate();
 
@@ -92,77 +86,59 @@ function Imports() {
   const userOptions = ['JohnDoe', 'JaneSmith', 'AliceJohnson', 'BobBrown'];
   const checkImportOptions = [true, false];
 
-  const fetchImports = async () => {
+  const fetchimports = async () => {
     try {
       const response = await axios.get(API_URL, {
         headers: { Authorization: `Bearer ${API_TOKEN}` },
       });
       const data = response.data.data;
-      console.log('Raw API Data:', data);
-      const formattedData = data.map((imp) => ({
-        id: imp.id,
-        date: imp.attributes?.date || getCurrentDate(), // Adjust based on API response structure
-        status: imp.attributes?.status || 'Pending',
-        description: imp.attributes?.description || '',
-        check_import: imp.attributes?.check_import ?? false,
-        user_1: imp.attributes?.user_1 || 'Unknown',
+      console.log('Raw API Data:', data); // Log raw response
+      const formattedData = data.map((order) => ({
+        id: order.id,
+        date: order.date || getCurrentData(),
+        status: order.status || 'Pending',
+        description: order.description || '',
+        check_import: order.check_import ?? false,
+        user_1: order.user_1 || 'Unknown',
       }));
-      console.log('Formatted imports:', formattedData);
-      setImports(formattedData);
+      console.log('Formatted imports:', formattedData); // Log mapped data
+      setImport(formattedData);
     } catch (err) {
       console.error('Error fetching imports:', err.response?.data?.error?.message || err.message);
-      alert('Failed to fetch imports. Check the server.');
     }
   };
 
   useEffect(() => {
-    fetchImports();
+    fetchimports();
   }, []);
 
-  const handleEdit = (imp) => {
-    setEditId(imp.id);
-    setNewImport({ ...imp });
+  const handleEdit = (order) => {
+    setEditId(order.id);
+    setNewImport({ ...order, date: getCurrentData() });
   };
 
-  const handleSaveEdit = async () => {
-    try {
-      const response = await axios.put(
-        `${API_URL}/${editId}`,
-        { data: { ...newImport, date: getCurrentDate() } },
-        { headers: { Authorization: `Bearer ${API_TOKEN}` } }
-      );
-      setImports(
-        imports.map((imp) =>
-          imp.id === editId ? response.data.data : imp
-        )
-      );
-      setEditId(null);
-      setNewImport({ date: '', status: '', description: '', check_import: false, user_1: '' });
-    } catch (err) {
-      console.error('Error updating import:', err);
-      alert('Failed to update import.');
-    }
+  const handleSaveEdit = () => {
+    setImport(
+      imports.map((order) =>
+        order.id === editId ? { ...order, ...newImport, date: getCurrentData() } : order
+      )
+    );
+    setEditId(null);
+    setNewImport({ date: '', status: '', description: '', check_import: false, user_1: '' });
   };
 
-  const handleDelete = async (id) => {
-    try {
-      await axios.delete(`${API_URL}/${id}`, {
-        headers: { Authorization: `Bearer ${API_TOKEN}` },
-      });
-      setImports(imports.filter((imp) => imp.id !== id));
-    } catch (err) {
-      console.error('Error deleting import:', err);
-      alert('Failed to delete import.');
-    }
+  const handleDelete = (id) => {
+    setImport(imports.filter((order) => order.id !== id));
   };
 
-  const handleDetail = (importId) => {
-    navigate(`/import_details`);
+  const handleDetail = (orderId) => {
+    navigate(`/order_details`);
   };
 
-  const filteredImports = imports.filter((imp) =>
-    (imp.description || '').toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredimports = imports.filter((order) =>
+    (order.description || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
+  console.log('Filtered imports:', filteredimports); // Log filtered data
 
   return (
     <ModernBox sx={{ maxWidth: '2100px', margin: '0 auto' }}>
@@ -258,7 +234,7 @@ function Imports() {
                 Save Edit
               </ModernButton>
             ) : (
-              <AddImport imports={imports} setImports={setImports} newImport={newImport} setNewImport={setNewImport} />
+              <AddOrder imports={imports} setImport={setImport} newImport={newImport} setNewImport={setNewImport} />
             )}
           </Grid>
         </Grid>
@@ -269,7 +245,7 @@ function Imports() {
         <SearchBar
           search={searchQuery}
           setSearch={setSearchQuery}
-          label="Search for Import"
+          label="Search for Order"
           sx={{ maxWidth: '400px', borderRadius: '25px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
         />
       </Box>
@@ -295,31 +271,29 @@ function Imports() {
             </TableRow>
           </ModernTableHead>
           <TableBody>
-            {filteredImports
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((imp) => (
-                <ModernTableRow key={imp.id}>
-                  <TableCell>{imp.id}</TableCell>
-                  <TableCell>{imp.date}</TableCell>
-                  <TableCell>{imp.status}</TableCell>
-                  <TableCell>{imp.description}</TableCell>
-                  <TableCell>{imp.check_import.toString()}</TableCell>
-                  <TableCell>{imp.user_1}</TableCell>
-                  <TableCell sx={{ textAlign: 'center' }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 5 }}>
-                      <Button onClick={() => handleEdit(imp)} sx={{ padding: 0, minWidth: 'auto' }}>
-                        <EditRoundedIcon />
-                      </Button>
-                      <Button onClick={() => handleDelete(imp.id)} sx={{ padding: 0, minWidth: 'auto' }}>
-                        <DeleteRoundedIcon />
-                      </Button>
-                      <Button onClick={() => handleDetail(imp.id)} sx={{ padding: 0, minWidth: 'auto' }}>
-                        <EyeOutlinedIcon />
-                      </Button>
-                    </Box>
-                  </TableCell>
-                </ModernTableRow>
-              ))}
+            {imports.map((order) => (
+              <ModernTableRow key={order.id}>
+                <TableCell>{order.id}</TableCell>
+                <TableCell>{order.date}</TableCell>
+                <TableCell>{order.status}</TableCell>
+                <TableCell>{order.description}</TableCell>
+                <TableCell>{order.check_import.toString()}</TableCell>
+                <TableCell>{order.user_1}</TableCell>
+                <TableCell sx={{ textAlign: 'center' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 5 }}>
+                    <Button onClick={() => handleEdit(order)} sx={{ padding: 0, minWidth: 'auto' }}>
+                      <EditRoundedIcon />
+                    </Button>
+                    <Button onClick={() => handleDelete(order.id)} sx={{ padding: 0, minWidth: 'auto' }}>
+                      <DeleteRoundedIcon />
+                    </Button>
+                    <Button onClick={() => handleDetail(order.id)} sx={{ padding: 0, minWidth: 'auto' }}>
+                      <EyeOutlinedIcon />
+                    </Button>
+                  </Box>
+                </TableCell>
+              </ModernTableRow>
+            ))}
           </TableBody>
         </Table>
       </ModernTableContainer>
@@ -327,18 +301,15 @@ function Imports() {
       <TablePagination
         rowsPerPageOptions={[5, 10, 25]}
         component="div"
-        count={filteredImports.length}
+        count={filteredimports.length}
         rowsPerPage={rowsPerPage}
         page={page}
         onPageChange={(event, newPage) => setPage(newPage)}
-        onRowsPerPageChange={(event) => {
-          setRowsPerPage(parseInt(event.target.value, 10));
-          setPage(0); // Reset to first page on rows per page change
-        }}
+        onRowsPerPageChange={(event) => setRowsPerPage(parseInt(event.target.value, 10))}
         sx={{ mt: 2 }}
       />
     </ModernBox>
   );
-}
+};
 
-export default Imports;
+export default imports;

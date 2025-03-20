@@ -25,7 +25,13 @@ import Unit from './pages/Unit'
 import Order from './pages/Order';
 import UProfile from './components/common/UProfile'
 import OrderDetails from './pages/Order_Details';
+import ImportDetails from './pages/Import_Details';
 import Repair from './pages/Repair';
+import RepairDetails from './pages/Repair_Details';
+import Borrow from './pages/Borrow';
+import BorrowDetails from './pages/Borrow_Details';
+import Export from './pages/Export';
+import ExportDetails from './pages/Export_Details';
 
 import GoogleAuth from '../src/test/GoogleAuth'
 
@@ -107,12 +113,19 @@ const App = () => {
           <Route path="/profile" element={<Profile />} />
           <Route path="/users" element={<Users />} />
           <Route path="/import" element={<Import />} />
+          <Route path="/import_details" element={<ImportDetails />} />
           <Route path="/type" element={<TypeSelected />} />
           <Route path="/order" element={<Order />} />
+          <Route path="/order_details" element={<OrderDetails />} />
           <Route path="/google" element={<GoogleAuth />} />
           <Route path="/uprofile" element={<UProfile />} />
           <Route path="/order_details" element={<OrderDetails />} />
           <Route path="/repair" element={<Repair />} />
+          <Route path="/repair_details" element={<RepairDetails />} />
+          <Route path="/borrow" element={<Borrow />} />
+          <Route path="/borrow_details" element={<BorrowDetails />} />
+          <Route path="/export" element={<Export />} />
+          <Route path="/export_details" element={<ExportDetails />} />
 
           <Route path='/auth/google/callback' element={<Callback />} />
           

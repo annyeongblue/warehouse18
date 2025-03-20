@@ -16,49 +16,49 @@ import EyeOutlinedIcon from '@mui/icons-material/RemoveRedEyeOutlined';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
 import { useNavigate } from 'react-router-dom';
-import SearchBar from '../components/common/SearchBar';
+import SearchBar from '../components/common/SearchBar'; // Assuming this exists
 import { ModernBox, ModernTextField, ModernPaper, ModernTableContainer, ModernTableHead, ModernTableRow, ModernButton, ModernSelect } from '../styles/styles';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:1337/api/imports';
+const API_URL = 'http://localhost:1337/api/borrows';
 const API_TOKEN = import.meta.env.VITE_API_TOKEN;
 
 const getCurrentDate = () => new Date().toISOString().split('T')[0];
 
-function AddImport({ imports, setImports, newImport, setNewImport }) {
-  const handleAddImport = async () => {
-    const { status, description } = newImport;
-    if (!status) {
+function AddBorrow({ borrows, setBorrows, newBorrow, setNewBorrow }) {
+  const handleAddBorrow = async () => {
+    const { status, borrower } = newBorrow;
+    if (!status || !borrower) {
       alert("Please fill out required fields.");
       return;
     }
 
-    const importExists = imports.some(
-      (imp) => imp.description && imp.description.toLowerCase() === description.toLowerCase()
+    const borrowExists = borrows.some(
+      (borrow) => borrow.borrower && borrow.borrower.toLowerCase() === borrower.toLowerCase()
     );
-    if (importExists) {
-      alert("Import already exists.");
+    if (borrowExists) {
+      alert("Borrow record already exists for this borrower.");
       return;
     }
 
     try {
       const response = await axios.post(
         API_URL,
-        { data: { ...newImport, date: getCurrentDate() } },
+        { data: { ...newBorrow, date: getCurrentDate() } },
         { headers: { Authorization: `Bearer ${API_TOKEN}` } }
       );
-      setImports([...imports, response.data.data]);
-      setNewImport({ date: '', status: '', description: '', check_import: false, user_1: '' });
+      setBorrows([...borrows, response.data.data]);
+      setNewBorrow({ date: '', status: '', borrower: '', item: '', return_date: '' });
     } catch (err) {
-      console.error('Error adding import:', err);
-      alert('Failed to add import.');
+      console.error('Error adding borrow:', err);
+      alert('Failed to add borrow record.');
     }
   };
 
   return (
     <ModernButton
       variant="contained"
-      onClick={handleAddImport}
+      onClick={handleAddBorrow}
       sx={{
         width: '160px',
         borderRadius: '20px',
@@ -68,79 +68,79 @@ function AddImport({ imports, setImports, newImport, setNewImport }) {
         '&:hover': { background: 'linear-gradient(45deg, #1565c0, #2196f3)' },
       }}
     >
-      Add Import
+      Add Borrow
     </ModernButton>
   );
 }
 
-function Imports() {
+function Borrow() {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [page, setPage] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
-  const [newImport, setNewImport] = useState({
+  const [newBorrow, setNewBorrow] = useState({
     date: getCurrentDate(),
     status: '',
-    description: '',
-    check_import: false,
-    user_1: '',
+    borrower: '',
+    item: '',
+    return_date: '',
   });
-  const [imports, setImports] = useState([]);
+  const [borrows, setBorrows] = useState([]);
   const [editId, setEditId] = useState(null);
   const navigate = useNavigate();
 
-  const statusOptions = ['Pending', 'Shipped', 'Delivered', 'Cancelled'];
-  const userOptions = ['JohnDoe', 'JaneSmith', 'AliceJohnson', 'BobBrown'];
-  const checkImportOptions = [true, false];
+  const statusOptions = ['Pending', 'Borrowed', 'Returned', 'Overdue'];
+  const borrowerOptions = ['JohnDoe', 'JaneSmith', 'AliceJohnson', 'BobBrown'];
+  const itemOptions = ['Book', 'Laptop', 'Tool', 'Camera'];
 
-  const fetchImports = async () => {
+  const fetchBorrows = async () => {
     try {
       const response = await axios.get(API_URL, {
         headers: { Authorization: `Bearer ${API_TOKEN}` },
       });
       const data = response.data.data;
       console.log('Raw API Data:', data);
-      const formattedData = data.map((imp) => ({
-        id: imp.id,
-        date: imp.attributes?.date || getCurrentDate(), // Adjust based on API response structure
-        status: imp.attributes?.status || 'Pending',
-        description: imp.attributes?.description || '',
-        check_import: imp.attributes?.check_import ?? false,
-        user_1: imp.attributes?.user_1 || 'Unknown',
+      const formattedData = data.map((borrow) => ({
+        id: borrow.id,
+        date: borrow.attributes?.date || getCurrentDate(),
+        status: borrow.attributes?.status || 'Pending',
+        borrower: borrow.attributes?.borrower || 'Unknown',
+        item: borrow.attributes?.item || '',
+        return_date: borrow.attributes?.return_date || '',
       }));
-      console.log('Formatted imports:', formattedData);
-      setImports(formattedData);
+      console.log('Formatted borrows:', formattedData);
+      setBorrows(formattedData);
     } catch (err) {
-      console.error('Error fetching imports:', err.response?.data?.error?.message || err.message);
-      alert('Failed to fetch imports. Check the server.');
+      console.error('Error fetching borrows:', err.response?.data?.error?.message || err.message);
+      alert('Failed to fetch borrow records.');
     }
   };
 
   useEffect(() => {
-    fetchImports();
+    fetchBorrows();
   }, []);
 
-  const handleEdit = (imp) => {
-    setEditId(imp.id);
-    setNewImport({ ...imp });
+  const handleEdit = (borrow) => {
+    setEditId(borrow.id);
+    setNewBorrow({ ...borrow });
   };
 
   const handleSaveEdit = async () => {
     try {
       const response = await axios.put(
         `${API_URL}/${editId}`,
-        { data: { ...newImport, date: getCurrentDate() } },
+        { data: { ...newBorrow, date: getCurrentDate() } },
         { headers: { Authorization: `Bearer ${API_TOKEN}` } }
       );
-      setImports(
-        imports.map((imp) =>
-          imp.id === editId ? response.data.data : imp
+      setBorrows(
+        borrows.map((borrow) =>
+          borrow.id === editId ? response.data.data : borrow
         )
       );
       setEditId(null);
-      setNewImport({ date: '', status: '', description: '', check_import: false, user_1: '' });
+      setNewBorrow({ date: '', status: '', borrower: '', item: '', return_date: '' });
     } catch (err) {
-      console.error('Error updating import:', err);
-      alert('Failed to update import.');
+      console.error('Error updating borrow:', err);
+      alert('Failed to update borrow record.');
     }
   };
 
@@ -149,19 +149,19 @@ function Imports() {
       await axios.delete(`${API_URL}/${id}`, {
         headers: { Authorization: `Bearer ${API_TOKEN}` },
       });
-      setImports(imports.filter((imp) => imp.id !== id));
+      setBorrows(borrows.filter((borrow) => borrow.id !== id));
     } catch (err) {
-      console.error('Error deleting import:', err);
-      alert('Failed to delete import.');
+      console.error('Error deleting borrow:', err);
+      alert('Failed to delete borrow record.');
     }
   };
 
-  const handleDetail = (importId) => {
-    navigate(`/import_details`);
+  const handleDetail = (borrowId) => {
+    navigate(`/borrow-details/${borrowId}`);
   };
 
-  const filteredImports = imports.filter((imp) =>
-    (imp.description || '').toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredBorrows = borrows.filter((borrow) =>
+    (borrow.borrower || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -175,7 +175,7 @@ function Imports() {
               type="date"
               fullWidth
               variant="outlined"
-              value={newImport.date}
+              value={newBorrow.date}
               disabled
               InputLabelProps={{ shrink: true }}
             />
@@ -184,9 +184,9 @@ function Imports() {
             <FormControl fullWidth>
               <InputLabel>Status</InputLabel>
               <ModernSelect
-                value={newImport.status}
+                value={newBorrow.status}
                 label="Status"
-                onChange={(e) => setNewImport({ ...newImport, status: e.target.value })}
+                onChange={(e) => setNewBorrow({ ...newBorrow, status: e.target.value })}
               >
                 <MenuItem value="">
                   <em>None</em>
@@ -201,15 +201,18 @@ function Imports() {
           </Grid>
           <Grid item xs={12} sm={6}>
             <FormControl fullWidth>
-              <InputLabel>Check Import</InputLabel>
+              <InputLabel>Borrower</InputLabel>
               <ModernSelect
-                value={newImport.check_import}
-                label="Check Import"
-                onChange={(e) => setNewImport({ ...newImport, check_import: e.target.value })}
+                value={newBorrow.borrower}
+                label="Borrower"
+                onChange={(e) => setNewBorrow({ ...newBorrow, borrower: e.target.value })}
               >
-                {checkImportOptions.map((option) => (
+                <MenuItem value="">
+                  <em>None</em>
+                </MenuItem>
+                {borrowerOptions.map((option) => (
                   <MenuItem key={option} value={option}>
-                    {option.toString()}
+                    {option}
                   </MenuItem>
                 ))}
               </ModernSelect>
@@ -217,16 +220,16 @@ function Imports() {
           </Grid>
           <Grid item xs={12} sm={6}>
             <FormControl fullWidth>
-              <InputLabel>User 1</InputLabel>
+              <InputLabel>Item</InputLabel>
               <ModernSelect
-                value={newImport.user_1}
-                label="User 1"
-                onChange={(e) => setNewImport({ ...newImport, user_1: e.target.value })}
+                value={newBorrow.item}
+                label="Item"
+                onChange={(e) => setNewBorrow({ ...newBorrow, item: e.target.value })}
               >
                 <MenuItem value="">
                   <em>None</em>
                 </MenuItem>
-                {userOptions.map((option) => (
+                {itemOptions.map((option) => (
                   <MenuItem key={option} value={option}>
                     {option}
                   </MenuItem>
@@ -236,11 +239,13 @@ function Imports() {
           </Grid>
           <Grid item xs={12}>
             <ModernTextField
-              label="Description"
+              label="Return Date"
+              type="date"
               fullWidth
               variant="outlined"
-              value={newImport.description}
-              onChange={(e) => setNewImport({ ...newImport, description: e.target.value })}
+              value={newBorrow.return_date}
+              onChange={(e) => setNewBorrow({ ...newBorrow, return_date: e.target.value })}
+              InputLabelProps={{ shrink: true }}
             />
           </Grid>
           <Grid item xs={12} sx={{ textAlign: 'right' }}>
@@ -258,7 +263,7 @@ function Imports() {
                 Save Edit
               </ModernButton>
             ) : (
-              <AddImport imports={imports} setImports={setImports} newImport={newImport} setNewImport={setNewImport} />
+              <AddBorrow borrows={borrows} setBorrows={setBorrows} newBorrow={newBorrow} setNewBorrow={setNewBorrow} />
             )}
           </Grid>
         </Grid>
@@ -269,7 +274,7 @@ function Imports() {
         <SearchBar
           search={searchQuery}
           setSearch={setSearchQuery}
-          label="Search for Import"
+          label="Search for Borrower"
           sx={{ maxWidth: '400px', borderRadius: '25px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
         />
       </Box>
@@ -288,32 +293,32 @@ function Imports() {
               <TableCell sx={{ fontWeight: 'bold' }}>ID</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Check Import</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>User</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Borrower</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Item</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Return Date</TableCell>
               <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>Actions</TableCell>
             </TableRow>
           </ModernTableHead>
           <TableBody>
-            {filteredImports
+            {filteredBorrows
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((imp) => (
-                <ModernTableRow key={imp.id}>
-                  <TableCell>{imp.id}</TableCell>
-                  <TableCell>{imp.date}</TableCell>
-                  <TableCell>{imp.status}</TableCell>
-                  <TableCell>{imp.description}</TableCell>
-                  <TableCell>{imp.check_import.toString()}</TableCell>
-                  <TableCell>{imp.user_1}</TableCell>
+              .map((borrow) => (
+                <ModernTableRow key={borrow.id}>
+                  <TableCell>{borrow.id}</TableCell>
+                  <TableCell>{borrow.date}</TableCell>
+                  <TableCell>{borrow.status}</TableCell>
+                  <TableCell>{borrow.borrower}</TableCell>
+                  <TableCell>{borrow.item}</TableCell>
+                  <TableCell>{borrow.return_date || 'Not Set'}</TableCell>
                   <TableCell sx={{ textAlign: 'center' }}>
                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 5 }}>
-                      <Button onClick={() => handleEdit(imp)} sx={{ padding: 0, minWidth: 'auto' }}>
+                      <Button onClick={() => handleEdit(borrow)} sx={{ padding: 0, minWidth: 'auto' }}>
                         <EditRoundedIcon />
                       </Button>
-                      <Button onClick={() => handleDelete(imp.id)} sx={{ padding: 0, minWidth: 'auto' }}>
+                      <Button onClick={() => handleDelete(borrow.id)} sx={{ padding: 0, minWidth: 'auto' }}>
                         <DeleteRoundedIcon />
                       </Button>
-                      <Button onClick={() => handleDetail(imp.id)} sx={{ padding: 0, minWidth: 'auto' }}>
+                      <Button onClick={() => handleDetail(borrow.id)} sx={{ padding: 0, minWidth: 'auto' }}>
                         <EyeOutlinedIcon />
                       </Button>
                     </Box>
@@ -327,7 +332,7 @@ function Imports() {
       <TablePagination
         rowsPerPageOptions={[5, 10, 25]}
         component="div"
-        count={filteredImports.length}
+        count={filteredBorrows.length}
         rowsPerPage={rowsPerPage}
         page={page}
         onPageChange={(event, newPage) => setPage(newPage)}
@@ -341,4 +346,4 @@ function Imports() {
   );
 }
 
-export default Imports;
+export default Borrow;

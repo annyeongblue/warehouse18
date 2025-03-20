@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Table,
@@ -8,53 +8,43 @@ import {
   TableHead,
   TableRow,
   TablePagination,
-  Paper,
   TextField,
-  Button as MuiButton,
+  Button,
   FormControl,
   InputLabel,
   MenuItem,
   Grid,
-  Menu,
-  ListItemIcon,
-  Button
 } from '@mui/material';
 import EyeOutlinedIcon from '@mui/icons-material/RemoveRedEyeOutlined';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate for navigation
+import { useNavigate } from 'react-router-dom';
 import SearchBar from '../components/common/SearchBar';
 import { ModernBox, ModernTextField, ModernPaper, ModernTableContainer, ModernTableHead, ModernTableRow, ModernButton, ModernSelect } from '../styles/styles';
+import axios from 'axios';
 
-const getCurrentData = () => {
-  return new Date().toISOString().split('T')[0];
-};
+const API_URL = 'http://localhost:1337/api/orders';
+const API_TOKEN = import.meta.env.VITE_API_TOKEN;
+
+const getCurrentData = () => new Date().toISOString().split('T')[0];
 
 function AddOrder({ orders, setOrders, newOrder, setNewOrder }) {
   const handleAddOrder = () => {
-    const { date, status, description, check_import, user_1 } = newOrder;
+    const { status, description } = newOrder;
     if (!status) {
       alert("Please fill out required fields.");
       return;
     }
 
     const orderExists = orders.some(
-      (orderItem) => orderItem.date === date && orderItem.description.toLowerCase() === description.toLowerCase()
+      (order) => order.description && order.description.toLowerCase() === description.toLowerCase()
     );
     if (orderExists) {
       alert("Order already exists.");
       return;
     }
 
-    const newOrderData = {
-      id: orders.length + 1,
-      date: getCurrentData(),
-      status,
-      description,
-      check_import,
-      user_1,
-    };
-
+    const newOrderData = { ...newOrder, id: orders.length + 1, date: getCurrentData() };
     setOrders([...orders, newOrderData]);
     setNewOrder({ date: '', status: '', description: '', check_import: false, user_1: '' });
   };
@@ -88,33 +78,39 @@ const Orders = () => {
     check_import: false,
     user_1: '',
   });
-  const [orders, setOrders] = useState([
-    {
-      id: 1,
-      date: '2025-03-01',
-      status: 'Pending',
-      description: 'Laptop order',
-      check_import: true,
-      user_1: 'JohnDoe',
-    },
-    {
-      id: 2,
-      date: '2025-03-02',
-      status: 'Shipped',
-      description: 'Keyboard order',
-      check_import: false,
-      user_1: 'JaneSmith',
-    },
-  ]);
+  const [orders, setOrders] = useState([]);
   const [editId, setEditId] = useState(null);
-  const navigate = useNavigate(); // Hook for navigation
+  const navigate = useNavigate();
 
   const statusOptions = ['Pending', 'Shipped', 'Delivered', 'Cancelled'];
   const userOptions = ['JohnDoe', 'JaneSmith', 'AliceJohnson', 'BobBrown'];
   const checkImportOptions = [true, false];
 
-  const handleChangePage = (event, newPage) => setPage(newPage);
-  const handleChangeRowsPerPage = (event) => setRowsPerPage(parseInt(event.target.value, 10));
+  const fetchOrders = async () => {
+    try {
+      const response = await axios.get(API_URL, {
+        headers: { Authorization: `Bearer ${API_TOKEN}` },
+      });
+      const data = response.data.data;
+      console.log('Raw API Data:', data); // Log raw response
+      const formattedData = data.map((order) => ({
+        id: order.id,
+        date: order.date || getCurrentData(),
+        status: order.status || 'Pending',
+        description: order.description || '',
+        check_import: order.check_import ?? false,
+        user_1: order.user_1 || 'Unknown',
+      }));
+      console.log('Formatted Orders:', formattedData); // Log mapped data
+      setOrders(formattedData);
+    } catch (err) {
+      console.error('Error fetching orders:', err.response?.data?.error?.message || err.message);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
 
   const handleEdit = (order) => {
     setEditId(order.id);
@@ -136,15 +132,13 @@ const Orders = () => {
   };
 
   const handleDetail = (orderId) => {
-    navigate(`/order_details`); // Navigate to the order detail page
+    navigate(`/order_details`);
   };
-  // const handleDetail = (orderId) => {
-  //   navigate(`/order_details/${orderId}`); // Navigate to the order detail page
-  // };
 
-  const filteredOrders = orders.filter((orderItem) =>
-    orderItem.description.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredOrders = orders.filter((order) =>
+    (order.description || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
+  console.log('Filtered Orders:', filteredOrders); // Log filtered data
 
   return (
     <ModernBox sx={{ maxWidth: '2100px', margin: '0 auto' }}>
@@ -272,46 +266,34 @@ const Orders = () => {
               <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Check Import</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>User 1</TableCell>
-              <TableCell sx={{ fontWeight: 'bold', textAlign:'center' }}>Actions</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>User</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>Actions</TableCell>
             </TableRow>
           </ModernTableHead>
           <TableBody>
-            {filteredOrders
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((orderItem) => (
-                <ModernTableRow key={orderItem.id}>
-                  <TableCell>{orderItem.id}</TableCell>
-                  <TableCell>{orderItem.date}</TableCell>
-                  <TableCell>{orderItem.status}</TableCell>
-                  <TableCell>{orderItem.description}</TableCell>
-                  <TableCell>{orderItem.check_import.toString()}</TableCell>
-                  <TableCell>{orderItem.user_1}</TableCell>
-                  <TableCell sx={{ textAlign: 'center' }}>
-                    <Button
-                      onClick={() => handleEdit(orderItem)}
-                    >
-                      <ListItemIcon sx={{ color: '#388e3c'}}>
-                        <EditRoundedIcon />
-                      </ListItemIcon>
+            {orders.map((order) => (
+              <ModernTableRow key={order.id}>
+                <TableCell>{order.id}</TableCell>
+                <TableCell>{order.date}</TableCell>
+                <TableCell>{order.status}</TableCell>
+                <TableCell>{order.description}</TableCell>
+                <TableCell>{order.check_import.toString()}</TableCell>
+                <TableCell>{order.user_1}</TableCell>
+                <TableCell sx={{ textAlign: 'center' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 5 }}>
+                    <Button onClick={() => handleEdit(order)} sx={{ padding: 0, minWidth: 'auto' }}>
+                      <EditRoundedIcon />
                     </Button>
-                    <Button
-                      onClick={() => handleDelete(orderItem.id)}
-                      >
-                      <ListItemIcon sx={{ color: 'red'}}>
-                        <DeleteRoundedIcon />
-                      </ListItemIcon>
+                    <Button onClick={() => handleDelete(order.id)} sx={{ padding: 0, minWidth: 'auto' }}>
+                      <DeleteRoundedIcon />
                     </Button>
-                    <Button
-                      onClick={() => handleDetail(orderItem.id)} // Navigate using order ID
-                    >
-                      <ListItemIcon sx={{ color: '#4dabf5' }}>
-                        <EyeOutlinedIcon />
-                      </ListItemIcon>
+                    <Button onClick={() => handleDetail(order.id)} sx={{ padding: 0, minWidth: 'auto' }}>
+                      <EyeOutlinedIcon />
                     </Button>
-                  </TableCell>
-                </ModernTableRow>
-              ))}
+                  </Box>
+                </TableCell>
+              </ModernTableRow>
+            ))}
           </TableBody>
         </Table>
       </ModernTableContainer>
@@ -322,8 +304,8 @@ const Orders = () => {
         count={filteredOrders.length}
         rowsPerPage={rowsPerPage}
         page={page}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
+        onPageChange={(event, newPage) => setPage(newPage)}
+        onRowsPerPageChange={(event) => setRowsPerPage(parseInt(event.target.value, 10))}
         sx={{ mt: 2 }}
       />
     </ModernBox>

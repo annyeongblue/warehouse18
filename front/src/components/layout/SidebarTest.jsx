@@ -100,17 +100,23 @@ export default function Sidebar({ open, handleDrawerToggle }) {
       case '/import':
         setSelected(5);
         break;
-      case 'repait':
+      case '/borrow':
         setSelected(6);
         break;
-      case '/requests':
+      case '/export':
         setSelected(7);
         break;
-      case '/history':
+      case 'repair':
         setSelected(8);
         break;
-      case '/users':
+      case '/requests':
         setSelected(9);
+        break;
+      case '/history':
+        setSelected(10);
+        break;
+      case '/users':
+        setSelected(11);
         break;
       default:
         setSelected(-1);
@@ -341,12 +347,12 @@ export default function Sidebar({ open, handleDrawerToggle }) {
           </ListItemButton>
         </ListItem>
 
-        {/* Repair */}
+        {/* Borrow */}
         <ListItem disablePadding>
           <ListItemButton
             selected={selected === 6}
             component={Link}
-            to="/repair"
+            to="/borrow"
             sx={{
               borderRadius: '12px',
               margin: '4px 8px',
@@ -357,18 +363,18 @@ export default function Sidebar({ open, handleDrawerToggle }) {
             }}
           >
             <ListItemIcon>
-              <CreateRoundedIcon sx={{ color: selected === 5 ? '#fff' : '#d1d5db', ml: -1.46 }} />
+              <CreateRoundedIcon sx={{ color: selected === 6 ? '#fff' : '#d1d5db', ml: -1.46 }} />
             </ListItemIcon>
-            <ListItemText primary="Repair" sx={{ transition: 'opacity 0.3s ease', opacity: open ? 1 : 0 }} />
+            <ListItemText primary="Borrow" sx={{ transition: 'opacity 0.3s ease', opacity: open ? 1 : 0 }} />
           </ListItemButton>
         </ListItem>
 
-        {/* Requests */}
+        {/* Export */}
         <ListItem disablePadding>
           <ListItemButton
             selected={selected === 7}
             component={Link}
-            to="/requests"
+            to="/export"
             sx={{
               borderRadius: '12px',
               margin: '4px 8px',
@@ -379,40 +385,40 @@ export default function Sidebar({ open, handleDrawerToggle }) {
             }}
           >
             <ListItemIcon>
-              <MoveToInboxRoundedIcon sx={{ color: selected === 6 ? '#fff' : '#d1d5db', ml: -1.46 }} />
+              <CreateRoundedIcon sx={{ color: selected === 7 ? '#fff' : '#d1d5db', ml: -1.46 }} />
             </ListItemIcon>
-            <ListItemText primary="Requests" sx={{ transition: 'opacity 0.3s ease', opacity: open ? 1 : 0 }} />
+            <ListItemText primary="Export" sx={{ transition: 'opacity 0.3s ease', opacity: open ? 1 : 0 }} />
           </ListItemButton>
         </ListItem>
 
-        {/* History */}
+        {/* Repair */}
         <ListItem disablePadding>
           <ListItemButton
             selected={selected === 8}
             component={Link}
-            to="/history"
+            to="/repair"
             sx={{
               borderRadius: '12px',
               margin: '4px 8px',
-              backgroundColor: selected === 8? '#3b82f6' : 'transparent',
+              backgroundColor: selected === 8 ? '#3b82f6' : 'transparent',
               color: selected === 8 ? '#fff' : '#d1d5db',
               '&:hover': { backgroundColor: selected === 8 ? '#3b82f6' : '#2a2a3f' },
               transition: 'all 0.2s ease',
             }}
           >
             <ListItemIcon>
-              <HistoryIcon sx={{ color: selected === 7 ? '#fff' : '#d1d5db', ml: -1.46 }} />
+              <CreateRoundedIcon sx={{ color: selected === 8 ? '#fff' : '#d1d5db', ml: -1.46 }} />
             </ListItemIcon>
-            <ListItemText primary="History" sx={{ transition: 'opacity 0.3s ease', opacity: open ? 1 : 0 }} />
+            <ListItemText primary="Repair" sx={{ transition: 'opacity 0.3s ease', opacity: open ? 1 : 0 }} />
           </ListItemButton>
         </ListItem>
 
-        {/* Users */}
+        {/* Requests */}
         <ListItem disablePadding>
           <ListItemButton
             selected={selected === 9}
             component={Link}
-            to="/users"
+            to="/requests"
             sx={{
               borderRadius: '12px',
               margin: '4px 8px',
@@ -423,7 +429,51 @@ export default function Sidebar({ open, handleDrawerToggle }) {
             }}
           >
             <ListItemIcon>
-              <PersonRoundedIcon sx={{ color: selected === 8 ? '#fff' : '#d1d5db', ml: -1.46 }} />
+              <MoveToInboxRoundedIcon sx={{ color: selected === 9 ? '#fff' : '#d1d5db', ml: -1.46 }} />
+            </ListItemIcon>
+            <ListItemText primary="Requests" sx={{ transition: 'opacity 0.3s ease', opacity: open ? 1 : 0 }} />
+          </ListItemButton>
+        </ListItem>
+
+        {/* History */}
+        <ListItem disablePadding>
+          <ListItemButton
+            selected={selected === 10}
+            component={Link}
+            to="/history"
+            sx={{
+              borderRadius: '12px',
+              margin: '4px 8px',
+              backgroundColor: selected === 10? '#3b82f6' : 'transparent',
+              color: selected === 10 ? '#fff' : '#d1d5db',
+              '&:hover': { backgroundColor: selected === 10 ? '#3b82f6' : '#2a2a3f' },
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <ListItemIcon>
+              <HistoryIcon sx={{ color: selected === 10 ? '#fff' : '#d1d5db', ml: -1.46 }} />
+            </ListItemIcon>
+            <ListItemText primary="History" sx={{ transition: 'opacity 0.3s ease', opacity: open ? 1 : 0 }} />
+          </ListItemButton>
+        </ListItem>
+
+        {/* Users */}
+        <ListItem disablePadding>
+          <ListItemButton
+            selected={selected === 11}
+            component={Link}
+            to="/users"
+            sx={{
+              borderRadius: '12px',
+              margin: '4px 8px',
+              backgroundColor: selected === 11 ? '#3b82f6' : 'transparent',
+              color: selected === 11 ? '#fff' : '#d1d5db',
+              '&:hover': { backgroundColor: selected === 11 ? '#3b82f6' : '#2a2a3f' },
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <ListItemIcon>
+              <PersonRoundedIcon sx={{ color: selected === 11 ? '#fff' : '#d1d5db', ml: -1.46 }} />
             </ListItemIcon>
             <ListItemText primary="Users" sx={{ transition: 'opacity 0.3s ease', opacity: open ? 1 : 0 }} />
           </ListItemButton>

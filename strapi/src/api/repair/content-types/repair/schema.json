@@ -38,8 +38,7 @@
     "repair_details": {
       "type": "relation",
       "relation": "oneToMany",
-      "target": "api::repair-detail.repair-detail",
-      "mappedBy": "repair"
+      "target": "api::repair-detail.repair-detail"
     }
   }
 }

@@ -23,12 +23,6 @@
     "comment": {
       "type": "string"
     },
-    "repair": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::repair.repair",
-      "inversedBy": "repair_details"
-    },
     "item_information": {
       "type": "relation",
       "relation": "manyToOne",

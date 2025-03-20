@@ -27,6 +27,8 @@ export default function SideTest() {
       '/inventory/iteminformation' : 'Item Information',
       '/order': 'Order',
       '/import': 'Import',
+      '/borrow': 'Borrow',
+      '/export': 'Export',
       '/repair': 'Repair',
       '/requests': 'Requests',
       '/history': 'History',

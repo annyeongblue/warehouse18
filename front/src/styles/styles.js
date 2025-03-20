@@ -9,7 +9,8 @@ import {
   Typography,
   Button,
   Paper,
-  Select
+  Select,
+  colors
 } from '@mui/material';
 
 export const ModernPaper = styled(Paper)(({ theme }) => ({
@@ -113,3 +114,45 @@ export const ModernTypography = styled(Typography)(({ theme }) => ({
   WebkitTextFillColor: 'transparent',
   marginBottom: theme.spacing(4),
 }));
+
+export const MultiSelect = styled(Select)(({ theme }) => ({
+  borderRadius: '12px',
+  backgroundColor: '#fff',
+  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+  '&:hover .MuiOUtlinedInput-cotchedOutlined': {
+    borderColor: theme.palette.primary.main,
+  },
+  '&Mui-focused .MuiOutlinedInput-notchedOutline': {
+    borderWidth: '2px',
+    borderColor: theme.palette.primary.main,
+  },
+  // Add multi-select specific styling
+  '& .MuiSelect-select': {
+    padding: '12px 32px 12px 16px',
+    display: 'flex',
+    alignItem: 'center',
+    minHeight: 'auto',
+  },
+  // Style the chips when multiple items are selected
+  '& .MuiChip-root': {
+    borderRadius: '8px',
+    background: 'linear-gradient(45deg, #6C63FF 30%, #897CFF 90%)',
+    color: '#fff',
+    margin: '2px',
+    height: '28px',
+    '&:hover': {
+      background: 'linear-gradient(45deg, #5A54E6 30%, #7369E6 90%)',
+    },
+    '& .MuiChip-deleteIcon': {
+      color: 'rgba(255, 255, 255, 0.7)',
+      '&:hover': {
+        color: '#fff',
+      },
+    },
+  },
+  // Ensure proper spacing for multiple selections
+  '& .MuiOutlinedInput-input': {
+    padding: '8px 12px',
+    borderRadius: '16px',
+  }
+}))

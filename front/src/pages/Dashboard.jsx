@@ -32,10 +32,10 @@ const Dashboard = () => {
           >
             <CardContent>
               <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
-                Total Clicks
+                Total Items
               </Typography>
               <Typography variant="h3" sx={{ fontWeight: 700, mt: 1 }}>
-                250
+                120
               </Typography>
             </CardContent>
           </Card>
@@ -56,10 +56,10 @@ const Dashboard = () => {
           >
             <CardContent>
               <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
-                Total Impressions
+                Total Export Items
               </Typography>
               <Typography variant="h3" sx={{ fontWeight: 700, mt: 1 }}>
-                32k
+                45
               </Typography>
             </CardContent>
           </Card>
@@ -80,10 +80,10 @@ const Dashboard = () => {
           >
             <CardContent>
               <Typography variant="h6" sx={{ fontWeight: 500, opacity: 0.9 }}>
-                Total Enquiries
+                Total Borrow Items
               </Typography>
               <Typography variant="h3" sx={{ fontWeight: 700, mt: 1 }}>
-                512
+                75
               </Typography>
             </CardContent>
           </Card>
