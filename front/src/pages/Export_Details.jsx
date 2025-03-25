@@ -24,10 +24,10 @@ import { ModernBox, ModernButton, ModernTableContainer, ModernTableHead, ModernT
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
 
-const OrderDetail = () => {
+const ExportDetails = () => {
   const { orderId } = useParams(); // Get the order ID from the URL
   const navigate = useNavigate();
-  const [orderDetails, setOrderDetails] = useState(null);
+  const [exportDetails, setExportDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [newDetail, setNewDetail] = useState({
@@ -47,7 +47,7 @@ const OrderDetail = () => {
 
   // Fetch order details from the API
   useEffect(() => {
-    const fetchOrderDetails = async () => {
+    const fetchexportDetails = async () => {
       setLoading(true);
       try {
         const response = await fetch(`http://localhost:1337/api/order-details`, {
@@ -58,7 +58,7 @@ const OrderDetail = () => {
         });
         if (!response.ok) throw new Error('Failed to fetch order details');
         const data = await response.json();
-        setOrderDetails({
+        setExportDetails({
           ...data,
           details: data.details || [], // Default to empty array if no details
         });
@@ -69,7 +69,7 @@ const OrderDetail = () => {
       }
     };
 
-    fetchOrderDetails();
+    fetchexportDetails();
   }, [orderId]);
 
   // Handle adding a new detail
@@ -80,15 +80,15 @@ const OrderDetail = () => {
     }
 
     const newDetailItem = {
-      id: orderDetails.details.length + 1, // Simple ID generation
+      id: exportDetails.details.length + 1, // Simple ID generation
       itemNames: newDetail.itemNames,
       quantity: parseInt(newDetail.quantity, 10),
       description: parseFloat(newDetail.description),
     };
 
-    setOrderDetails({
-      ...orderDetails,
-      details: [...orderDetails.details, newDetailItem],
+    setExportDetails({
+      ...exportDetails,
+      details: [...exportDetails.details, newDetailItem],
     });
 
     // Reset the input fields
@@ -109,15 +109,15 @@ const OrderDetail = () => {
         <Typography variant="h6" sx={{ py: 4 }}>Loading...</Typography>
       ) : error ? (
         <Typography variant="h6" color="error" sx={{ py: 4 }}>{error}</Typography>
-      ) : orderDetails ? (
+      ) : exportDetails ? (
         <>
           {/* Order Summary */}
           <Box sx={{ mb: 6, p: 4, borderRadius: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', bgcolor: '#fff' }}>
-            <Typography variant="body1" sx={{ mb: 1 }}><strong>ID:</strong> {orderDetails.id}</Typography>
-            <Typography variant="body1" sx={{ mb: 1 }}><strong>Date:</strong> {orderDetails.date}</Typography>
-            <Typography variant="body1" sx={{ mb: 1 }}><strong>Status:</strong> {orderDetails.status}</Typography>
-            <Typography variant="body1" sx={{ mb: 1 }}><strong>Description:</strong> {orderDetails.description}</Typography>
-            <Typography variant="body1" sx={{ mb: 1 }}><strong>User:</strong> {orderDetails.user_1}</Typography>
+            <Typography variant="body1" sx={{ mb: 1 }}><strong>ID:</strong> {exportDetails.id}</Typography>
+            <Typography variant="body1" sx={{ mb: 1 }}><strong>Date:</strong> {exportDetails.date}</Typography>
+            <Typography variant="body1" sx={{ mb: 1 }}><strong>Status:</strong> {exportDetails.status}</Typography>
+            <Typography variant="body1" sx={{ mb: 1 }}><strong>Description:</strong> {exportDetails.description}</Typography>
+            <Typography variant="body1" sx={{ mb: 1 }}><strong>User:</strong> {exportDetails.user_1}</Typography>
           </Box>
 
           {/* Add Detail Form */}
@@ -212,8 +212,8 @@ const OrderDetail = () => {
                 </TableRow>
               </ModernTableHead>
               <TableBody>
-                {orderDetails.details.length > 0 ? (
-                  orderDetails.details.map((detail) => (
+                {exportDetails.details.length > 0 ? (
+                  exportDetails.details.map((detail) => (
                     <ModernTableRow key={detail.id}>
                       <TableCell sx={{ py: 2.5 }}>{detail.id}</TableCell>
                       <TableCell sx={{ py: 2.5 }}>{detail.itemNames.join(', ')}</TableCell>
@@ -254,4 +254,4 @@ const OrderDetail = () => {
   );
 };
 
-export default OrderDetail;
+export default ExportDetails;

@@ -113,19 +113,18 @@ const App = () => {
           <Route path="/profile" element={<Profile />} />
           <Route path="/users" element={<Users />} />
           <Route path="/import" element={<Import />} />
-          <Route path="/import_details" element={<ImportDetails />} />
+          <Route path="/import_detail/:id" element={<ImportDetails />} />
           <Route path="/type" element={<TypeSelected />} />
           <Route path="/order" element={<Order />} />
-          <Route path="/order_details" element={<OrderDetails />} />
+          <Route path="/order_detail/:id" element={<OrderDetails />} />
           <Route path="/google" element={<GoogleAuth />} />
           <Route path="/uprofile" element={<UProfile />} />
-          <Route path="/order_details" element={<OrderDetails />} />
           <Route path="/repair" element={<Repair />} />
-          <Route path="/repair_details" element={<RepairDetails />} />
+          <Route path="/repair_detail/:id" element={<RepairDetails />} />
           <Route path="/borrow" element={<Borrow />} />
-          <Route path="/borrow_details" element={<BorrowDetails />} />
+          <Route path="/borrow_detail/:id" element={<BorrowDetails />} />
           <Route path="/export" element={<Export />} />
-          <Route path="/export_details" element={<ExportDetails />} />
+          <Route path="/export_detail" element={<ExportDetails />} />
 
           <Route path='/auth/google/callback' element={<Callback />} />
           

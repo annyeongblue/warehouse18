@@ -7,10 +7,10 @@ import {
   TableRow,
   TablePagination,
   Button,
+  Grid,
   FormControl,
   InputLabel,
   MenuItem,
-  Grid,
 } from '@mui/material';
 import EyeOutlinedIcon from '@mui/icons-material/RemoveRedEyeOutlined';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
@@ -27,30 +27,28 @@ const getCurrentDate = () => new Date().toISOString().split('T')[0];
 
 function AddImport({ imports, setImports, newImport, setNewImport }) {
   const handleAddImport = async () => {
-    const { status, description } = newImport;
-    if (!status) {
-      alert("Please fill out required fields.");
-      return;
-    }
-
-    const importExists = imports.some(
-      (imp) => imp.description && imp.description.toLowerCase() === description.toLowerCase()
-    );
-    if (importExists) {
-      alert("Import already exists.");
+    const { total } = newImport;
+    if (!total) {
+      alert("Please fill out the total and user fields.");
       return;
     }
 
     try {
       const response = await axios.post(
         API_URL,
-        { data: { ...newImport, date: getCurrentDate() } },
+        { data: { date: getCurrentDate(), total: parseFloat(total) } }, // Parse total as a number
         { headers: { Authorization: `Bearer ${API_TOKEN}` } }
       );
-      setImports([...imports, response.data.data]);
-      setNewImport({ date: '', status: '', description: '', check_import: false, user_1: '' });
+      const newImportData = {
+        id: response.data.data.id,
+        date: response.data.data.attributes?.date || getCurrentDate(),
+        total: response.data.data.attributes?.total || total,
+        user: response.data.data.attributes?.user || user,
+      };
+      setImports([...imports, newImportData]);
+      setNewImport({ date: getCurrentDate(), total: '', user: '' });
     } catch (err) {
-      console.error('Error adding import:', err);
+      console.error('Error adding import:', err.response?.data?.error?.message || err.message);
       alert('Failed to add import.');
     }
   };
@@ -79,18 +77,14 @@ function Imports() {
   const [searchQuery, setSearchQuery] = useState('');
   const [newImport, setNewImport] = useState({
     date: getCurrentDate(),
-    status: '',
-    description: '',
-    check_import: false,
-    user_1: '',
+    total: '',
+    user: '',
   });
   const [imports, setImports] = useState([]);
   const [editId, setEditId] = useState(null);
   const navigate = useNavigate();
 
-  const statusOptions = ['Pending', 'Shipped', 'Delivered', 'Cancelled'];
-  const userOptions = ['JohnDoe', 'JaneSmith', 'AliceJohnson', 'BobBrown'];
-  const checkImportOptions = [true, false];
+  const userOptions = ['Loungfar', 'Tockky', 'Nana'];
 
   const fetchImports = async () => {
     try {
@@ -101,11 +95,9 @@ function Imports() {
       console.log('Raw API Data:', data);
       const formattedData = data.map((imp) => ({
         id: imp.id,
-        date: imp.attributes?.date || getCurrentDate(), // Adjust based on API response structure
-        status: imp.attributes?.status || 'Pending',
-        description: imp.attributes?.description || '',
-        check_import: imp.attributes?.check_import ?? false,
-        user_1: imp.attributes?.user_1 || 'Unknown',
+        date: imp.attributes?.date || getCurrentDate(),
+        total: imp.attributes?.total || 'N/A',
+        user: imp.attributes?.user || 'Unknown',
       }));
       console.log('Formatted imports:', formattedData);
       setImports(formattedData);
@@ -128,18 +120,22 @@ function Imports() {
     try {
       const response = await axios.put(
         `${API_URL}/${editId}`,
-        { data: { ...newImport, date: getCurrentDate() } },
+        { data: { date: getCurrentDate(), total: parseFloat(newImport.total), user: newImport.user } },
         { headers: { Authorization: `Bearer ${API_TOKEN}` } }
       );
+      const updatedImport = {
+        id: response.data.data.id,
+        date: response.data.data.attributes?.date || getCurrentDate(),
+        total: response.data.data.attributes?.total || newImport.total,
+        user: response.data.data.attributes?.user || newImport.user,
+      };
       setImports(
-        imports.map((imp) =>
-          imp.id === editId ? response.data.data : imp
-        )
+        imports.map((imp) => (imp.id === editId ? updatedImport : imp))
       );
       setEditId(null);
-      setNewImport({ date: '', status: '', description: '', check_import: false, user_1: '' });
+      setNewImport({ date: getCurrentDate(), total: '', user: '' });
     } catch (err) {
-      console.error('Error updating import:', err);
+      console.error('Error updating import:', err.response?.data?.error?.message || err.message);
       alert('Failed to update import.');
     }
   };
@@ -151,17 +147,18 @@ function Imports() {
       });
       setImports(imports.filter((imp) => imp.id !== id));
     } catch (err) {
-      console.error('Error deleting import:', err);
+      console.error('Error deleting import:', err.response?.data?.error?.message || err.message);
       alert('Failed to delete import.');
     }
   };
 
   const handleDetail = (importId) => {
-    navigate(`/import_details`);
+    navigate(`/import_detail/${importId}`);
   };
 
   const filteredImports = imports.filter((imp) =>
-    (imp.description || '').toLowerCase().includes(searchQuery.toLowerCase())
+    (imp.total || '').toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (imp.user || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -169,7 +166,7 @@ function Imports() {
       {/* Form Section */}
       <ModernPaper sx={{ p: 3, mb: 4, borderRadius: '15px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12} sm={4}>
             <ModernTextField
               label="Date"
               type="date"
@@ -180,48 +177,23 @@ function Imports() {
               InputLabelProps={{ shrink: true }}
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth>
-              <InputLabel>Status</InputLabel>
-              <ModernSelect
-                value={newImport.status}
-                label="Status"
-                onChange={(e) => setNewImport({ ...newImport, status: e.target.value })}
-              >
-                <MenuItem value="">
-                  <em>None</em>
-                </MenuItem>
-                {statusOptions.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option}
-                  </MenuItem>
-                ))}
-              </ModernSelect>
-            </FormControl>
+          <Grid item xs={12} sm={4}>
+            <ModernTextField
+              label="Total"
+              fullWidth
+              type="number"
+              variant="outlined"
+              value={newImport.total}
+              onChange={(e) => setNewImport({ ...newImport, total: e.target.value })}
+            />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12} sm={4}>
             <FormControl fullWidth>
-              <InputLabel>Check Import</InputLabel>
+              <InputLabel>User</InputLabel>
               <ModernSelect
-                value={newImport.check_import}
-                label="Check Import"
-                onChange={(e) => setNewImport({ ...newImport, check_import: e.target.value })}
-              >
-                {checkImportOptions.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option.toString()}
-                  </MenuItem>
-                ))}
-              </ModernSelect>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth>
-              <InputLabel>User 1</InputLabel>
-              <ModernSelect
-                value={newImport.user_1}
-                label="User 1"
-                onChange={(e) => setNewImport({ ...newImport, user_1: e.target.value })}
+                value={newImport.user}
+                label="User"
+                onChange={(e) => setNewImport({ ...newImport, user: e.target.value })}
               >
                 <MenuItem value="">
                   <em>None</em>
@@ -233,15 +205,6 @@ function Imports() {
                 ))}
               </ModernSelect>
             </FormControl>
-          </Grid>
-          <Grid item xs={12}>
-            <ModernTextField
-              label="Description"
-              fullWidth
-              variant="outlined"
-              value={newImport.description}
-              onChange={(e) => setNewImport({ ...newImport, description: e.target.value })}
-            />
           </Grid>
           <Grid item xs={12} sx={{ textAlign: 'right' }}>
             {editId ? (
@@ -269,7 +232,7 @@ function Imports() {
         <SearchBar
           search={searchQuery}
           setSearch={setSearchQuery}
-          label="Search for Import"
+          label="Search for Import by Total or User"
           sx={{ maxWidth: '400px', borderRadius: '25px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
         />
       </Box>
@@ -287,9 +250,7 @@ function Imports() {
             <TableRow>
               <TableCell sx={{ fontWeight: 'bold' }}>ID</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Check Import</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Total</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>User</TableCell>
               <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>Actions</TableCell>
             </TableRow>
@@ -301,10 +262,8 @@ function Imports() {
                 <ModernTableRow key={imp.id}>
                   <TableCell>{imp.id}</TableCell>
                   <TableCell>{imp.date}</TableCell>
-                  <TableCell>{imp.status}</TableCell>
-                  <TableCell>{imp.description}</TableCell>
-                  <TableCell>{imp.check_import.toString()}</TableCell>
-                  <TableCell>{imp.user_1}</TableCell>
+                  <TableCell>{imp.total}</TableCell>
+                  <TableCell>{imp.user}</TableCell>
                   <TableCell sx={{ textAlign: 'center' }}>
                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 5 }}>
                       <Button onClick={() => handleEdit(imp)} sx={{ padding: 0, minWidth: 'auto' }}>
@@ -333,7 +292,7 @@ function Imports() {
         onPageChange={(event, newPage) => setPage(newPage)}
         onRowsPerPageChange={(event) => {
           setRowsPerPage(parseInt(event.target.value, 10));
-          setPage(0); // Reset to first page on rows per page change
+          setPage(0);
         }}
         sx={{ mt: 2 }}
       />

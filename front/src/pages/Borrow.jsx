@@ -89,7 +89,7 @@ function Borrow() {
   const navigate = useNavigate();
 
   const statusOptions = ['Pending', 'Borrowed', 'Returned', 'Overdue'];
-  const borrowerOptions = ['JohnDoe', 'JaneSmith', 'AliceJohnson', 'BobBrown'];
+  const borrowerOptions = ['Loungfar', 'Tockky', 'Nana'];
   const itemOptions = ['Book', 'Laptop', 'Tool', 'Camera'];
 
   const fetchBorrows = async () => {
@@ -171,7 +171,7 @@ function Borrow() {
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6}>
             <ModernTextField
-              label="Date"
+              label="Borrow Date"
               type="date"
               fullWidth
               variant="outlined"
@@ -179,25 +179,6 @@ function Borrow() {
               disabled
               InputLabelProps={{ shrink: true }}
             />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth>
-              <InputLabel>Status</InputLabel>
-              <ModernSelect
-                value={newBorrow.status}
-                label="Status"
-                onChange={(e) => setNewBorrow({ ...newBorrow, status: e.target.value })}
-              >
-                <MenuItem value="">
-                  <em>None</em>
-                </MenuItem>
-                {statusOptions.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option}
-                  </MenuItem>
-                ))}
-              </ModernSelect>
-            </FormControl>
           </Grid>
           <Grid item xs={12} sm={6}>
             <FormControl fullWidth>
@@ -220,6 +201,25 @@ function Borrow() {
           </Grid>
           <Grid item xs={12} sm={6}>
             <FormControl fullWidth>
+              <InputLabel>Status</InputLabel>
+              <ModernSelect
+                value={newBorrow.status}
+                label="Status"
+                onChange={(e) => setNewBorrow({ ...newBorrow, status: e.target.value })}
+              >
+                <MenuItem value="">
+                  <em>None</em>
+                </MenuItem>
+                {statusOptions.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </ModernSelect>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth>
               <InputLabel>Item</InputLabel>
               <ModernSelect
                 value={newBorrow.item}
@@ -230,6 +230,63 @@ function Borrow() {
                   <em>None</em>
                 </MenuItem>
                 {itemOptions.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </ModernSelect>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth>
+              <InputLabel>Approver</InputLabel>
+              <ModernSelect
+                value={newBorrow.borrower}
+                label="Borrower"
+                onChange={(e) => setNewBorrow({ ...newBorrow, borrower: e.target.value })}
+              >
+                <MenuItem value="">
+                  <em>None</em>
+                </MenuItem>
+                {borrowerOptions.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </ModernSelect>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth>
+              <InputLabel>Comment</InputLabel>
+              <ModernSelect
+                value={newBorrow.borrower}
+                label="Borrower"
+                onChange={(e) => setNewBorrow({ ...newBorrow, borrower: e.target.value })}
+              >
+                <MenuItem value="">
+                  <em>None</em>
+                </MenuItem>
+                {borrowerOptions.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </ModernSelect>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth>
+              <InputLabel>Return Approver</InputLabel>
+              <ModernSelect
+                value={newBorrow.borrower}
+                label="Borrower"
+                onChange={(e) => setNewBorrow({ ...newBorrow, borrower: e.target.value })}
+              >
+                <MenuItem value="">
+                  <em>None</em>
+                </MenuItem>
+                {borrowerOptions.map((option) => (
                   <MenuItem key={option} value={option}>
                     {option}
                   </MenuItem>

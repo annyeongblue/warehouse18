@@ -26,7 +26,7 @@ import axios from 'axios';
 const API_URL = 'http://localhost:1337/api/orders';
 const API_TOKEN = import.meta.env.VITE_API_TOKEN;
 
-const getCurrentData = () => new Date().toISOString().split('T')[0];
+const getCurrentDate = () => new Date().toISOString().split('T')[0];
 
 function AddOrder({ orders, setOrders, newOrder, setNewOrder }) {
   const handleAddOrder = () => {
@@ -44,7 +44,7 @@ function AddOrder({ orders, setOrders, newOrder, setNewOrder }) {
       return;
     }
 
-    const newOrderData = { ...newOrder, id: orders.length + 1, date: getCurrentData() };
+    const newOrderData = { ...newOrder, id: orders.length + 1, date: getCurrentDate() };
     setOrders([...orders, newOrderData]);
     setNewOrder({ date: '', status: '', description: '', check_import: false, user_1: '' });
   };
@@ -72,7 +72,7 @@ const Orders = () => {
   const [page, setPage] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [newOrder, setNewOrder] = useState({
-    date: getCurrentData(),
+    date: getCurrentDate(),
     status: '',
     description: '',
     check_import: false,
@@ -83,7 +83,7 @@ const Orders = () => {
   const navigate = useNavigate();
 
   const statusOptions = ['Pending', 'Shipped', 'Delivered', 'Cancelled'];
-  const userOptions = ['JohnDoe', 'JaneSmith', 'AliceJohnson', 'BobBrown'];
+  const userOptions = ['Loungfar', 'Tockky', 'Nana'];
   const checkImportOptions = [true, false];
 
   const fetchOrders = async () => {
@@ -95,7 +95,7 @@ const Orders = () => {
       console.log('Raw API Data:', data); // Log raw response
       const formattedData = data.map((order) => ({
         id: order.id,
-        date: order.date || getCurrentData(),
+        date: order.date || getCurrentDate(),
         status: order.status || 'Pending',
         description: order.description || '',
         check_import: order.check_import ?? false,
@@ -114,13 +114,13 @@ const Orders = () => {
 
   const handleEdit = (order) => {
     setEditId(order.id);
-    setNewOrder({ ...order, date: getCurrentData() });
+    setNewOrder({ ...order, date: getCurrentDate() });
   };
 
   const handleSaveEdit = () => {
     setOrders(
       orders.map((order) =>
-        order.id === editId ? { ...order, ...newOrder, date: getCurrentData() } : order
+        order.id === editId ? { ...order, ...newOrder, date: getCurrentDate() } : order
       )
     );
     setEditId(null);
@@ -132,7 +132,7 @@ const Orders = () => {
   };
 
   const handleDetail = (orderId) => {
-    navigate(`/order_details`);
+    navigate(`/order_detail/${orderId}`);
   };
 
   const filteredOrders = orders.filter((order) =>
@@ -264,9 +264,9 @@ const Orders = () => {
               <TableCell sx={{ fontWeight: 'bold' }}>ID</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Check Import</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>User</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
               <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>Actions</TableCell>
             </TableRow>
           </ModernTableHead>
@@ -276,9 +276,9 @@ const Orders = () => {
                 <TableCell>{order.id}</TableCell>
                 <TableCell>{order.date}</TableCell>
                 <TableCell>{order.status}</TableCell>
-                <TableCell>{order.description}</TableCell>
                 <TableCell>{order.check_import.toString()}</TableCell>
                 <TableCell>{order.user_1}</TableCell>
+                <TableCell>{order.description}</TableCell>
                 <TableCell sx={{ textAlign: 'center' }}>
                   <Box sx={{ display: 'flex', justifyContent: 'center', gap: 5 }}>
                     <Button onClick={() => handleEdit(order)} sx={{ padding: 0, minWidth: 'auto' }}>

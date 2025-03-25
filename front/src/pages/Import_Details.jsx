@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -23,9 +23,19 @@ const ITEM_PADDING_TOP = 8;
 const ImportDetail = () => {
   const { importId } = useParams(); // Get the import ID from the URL
   const navigate = useNavigate();
-  const [importDetails, setImportDetails] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  
+  // Static data for demonstration
+  const [importDetails, setImportDetails] = useState({
+    id: importId,
+    date: '2025-03-24',
+    total: 1500.75,
+    user_1: 'Loungfar',
+    details: [
+      { id: 1, itemNames: ['Computer', 'Pen'], quantity: 5, description: 'Office supplies' },
+      { id: 2, itemNames: ['A4 Paper'], quantity: 100, description: 'Printing paper' },
+    ],
+  });
+
   const [newDetail, setNewDetail] = useState({
     itemNames: [], // Array to hold multiple items
     quantity: '',
@@ -33,40 +43,7 @@ const ImportDetail = () => {
   }); // State for new detail input
 
   // Available items for the multi-select dropdown
-  const availableItems = [
-    'Item 1',
-    'Item 2',
-    'Item 3',
-    'Item 4',
-    'Item 5',
-  ];
-
-  // Fetch import details from the API
-  useEffect(() => {
-    const fetchImportDetails = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(`http://localhost:1337/api/import-details`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        if (!response.ok) throw new Error('Failed to fetch import details');
-        const data = await response.json();
-        setImportDetails({
-          ...data,
-          details: data.details || [], // Default to empty array if no details
-        });
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchImportDetails();
-  }, [importId]);
+  const availableItems = ['Computer', 'Pen', 'A4 Paper', 'Notebook'];
 
   // Handle adding a new detail
   const handleAddDetail = () => {
@@ -79,7 +56,7 @@ const ImportDetail = () => {
       id: importDetails.details.length + 1, // Simple ID generation
       itemNames: newDetail.itemNames,
       quantity: parseInt(newDetail.quantity, 10),
-      description: newDetail.description, // Keep as string unless API expects a number
+      description: newDetail.description,
     };
 
     setImportDetails({
@@ -101,18 +78,13 @@ const ImportDetail = () => {
         Import Detail - ID: {importId}
       </Typography>
 
-      {loading ? (
-        <Typography variant="h6" sx={{ py: 4 }}>Loading...</Typography>
-      ) : error ? (
-        <Typography variant="h6" color="error" sx={{ py: 4 }}>{error}</Typography>
-      ) : importDetails ? (
+      {importDetails ? (
         <>
           {/* Import Summary */}
           <Box sx={{ mb: 6, p: 4, borderRadius: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', bgcolor: '#fff' }}>
             <Typography variant="body1" sx={{ mb: 1 }}><strong>ID:</strong> {importDetails.id}</Typography>
             <Typography variant="body1" sx={{ mb: 1 }}><strong>Date:</strong> {importDetails.date}</Typography>
-            <Typography variant="body1" sx={{ mb: 1 }}><strong>Status:</strong> {importDetails.status}</Typography>
-            <Typography variant="body1" sx={{ mb: 1 }}><strong>Description:</strong> {importDetails.description}</Typography>
+            <Typography variant="body1" sx={{ mb: 1 }}><strong>Total:</strong> {importDetails.total}</Typography>
             <Typography variant="body1" sx={{ mb: 1 }}><strong>User:</strong> {importDetails.user_1}</Typography>
           </Box>
 
@@ -146,7 +118,7 @@ const ImportDetail = () => {
                         },
                       },
                     }}
-                    sx={{ minHeight: '56px' }} // Ensures consistent height with text fields
+                    sx={{ minHeight: '56px' }}
                   >
                     {availableItems.map((item) => (
                       <MenuItem key={item} value={item}>
@@ -164,7 +136,7 @@ const ImportDetail = () => {
                   type="number"
                   value={newDetail.quantity}
                   onChange={(e) => setNewDetail({ ...newDetail, quantity: e.target.value })}
-                  sx={{ '& .MuiOutlinedInput-root': { height: '56px' } }} // Consistent height
+                  sx={{ '& .MuiOutlinedInput-root': { height: '56px' } }}
                 />
               </Grid>
               <Grid item xs={12} sm={4}>
@@ -175,7 +147,7 @@ const ImportDetail = () => {
                   type="text"
                   value={newDetail.description}
                   onChange={(e) => setNewDetail({ ...newDetail, description: e.target.value })}
-                  sx={{ '& .MuiOutlinedInput-root': { height: '56px' } }} // Consistent height
+                  sx={{ '& .MuiOutlinedInput-root': { height: '56px' } }}
                 />
               </Grid>
               <Grid item xs={12} sx={{ textAlign: 'right', mt: 2 }}>
@@ -187,7 +159,7 @@ const ImportDetail = () => {
                     background: 'linear-gradient(45deg, #388e3c, #66bb6a)',
                     color: '#fff',
                     '&:hover': { background: 'linear-gradient(45deg, #2e7d32, #4caf50)' },
-                    padding: '12px 24px', // Larger button
+                    padding: '12px 24px',
                   }}
                 >
                   Add Detail
@@ -241,7 +213,7 @@ const ImportDetail = () => {
           background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
           color: '#fff',
           '&:hover': { background: 'linear-gradient(45deg, #1565c0, #2196f3)' },
-          padding: '12px 24px', // Larger button
+          padding: '12px 24px',
         }}
       >
         Back to Imports
