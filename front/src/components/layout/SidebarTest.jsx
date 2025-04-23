@@ -115,7 +115,7 @@ export default function Sidebar({ open, handleDrawerToggle }) {
       case '/history':
         setSelected(10);
         break;
-      case '/users':
+      case '/user':
         setSelected(11);
         break;
       default:
@@ -457,16 +457,16 @@ export default function Sidebar({ open, handleDrawerToggle }) {
           </ListItemButton>
         </ListItem>
 
-        {/* Users */}
+        {/* User */}
         <ListItem disablePadding>
           <ListItemButton
             selected={selected === 11}
             component={Link}
-            to="/users"
+            to="/user"
             sx={{
               borderRadius: '12px',
               margin: '4px 8px',
-              backgroundColor: selected === 11 ? '#3b82f6' : 'transparent',
+              backgroundColor: selected === 11? '#3b82f6' : 'transparent',
               color: selected === 11 ? '#fff' : '#d1d5db',
               '&:hover': { backgroundColor: selected === 11 ? '#3b82f6' : '#2a2a3f' },
               transition: 'all 0.2s ease',
@@ -475,7 +475,7 @@ export default function Sidebar({ open, handleDrawerToggle }) {
             <ListItemIcon>
               <PersonRoundedIcon sx={{ color: selected === 11 ? '#fff' : '#d1d5db', ml: -1.46 }} />
             </ListItemIcon>
-            <ListItemText primary="Users" sx={{ transition: 'opacity 0.3s ease', opacity: open ? 1 : 0 }} />
+            <ListItemText primary="User" sx={{ transition: 'opacity 0.3s ease', opacity: open ? 1 : 0 }} />
           </ListItemButton>
         </ListItem>
       </List>

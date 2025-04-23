@@ -32,7 +32,7 @@ export default function SideTest() {
       '/repair': 'Repair',
       // '/requests': 'Requests',
       '/history': 'History',
-      '/users': 'Users',
+      '/user': 'User',
       '/order_detail/:id': 'Order Detail',
     };
 

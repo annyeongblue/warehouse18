@@ -14,9 +14,16 @@ import {
   Button,
   TextField,
   TablePagination,
+  InputLabel,
+  FormControl,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
+import { ModernSelect } from '../styles/styles';
 
-const API_URL = 'http://localhost:1337/api/users?populate=*';
+const API_URL = 'http://localhost:1337/api/users?populate=role';
 
 const AuthorizePage = () => {
   const [users, setUsers] = useState([]);
@@ -24,8 +31,11 @@ const AuthorizePage = () => {
   const [newUser, setNewUser] = useState({
     username: '',
     email: '',
-    role: 'Public',
+    role: 'Pending',
+    password: '',
   });
+  const [editingUser, setEditingUser] = useState(null); // For edit mode
+  const [detailUser, setDetailUser] = useState(null); // For detail modal
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
@@ -38,13 +48,11 @@ const AuthorizePage = () => {
       const response = await fetch(API_URL);
       if (!response.ok) throw new Error(`Failed to fetch users: ${response.status}`);
       const userData = await response.json();
-      console.log('User raw response:', userData);
-      
       const usersArray = userData.map((user) => ({
         id: user.id,
         username: user.username,
         email: user.email,
-        role: user.role?.name || 'Public',
+        role: user.role?.name || 'Pending',
         status: user.confirmed ? 'Approved' : 'Pending',
       }));
       setUsers(usersArray);
@@ -79,7 +87,10 @@ const AuthorizePage = () => {
     try {
       const response = await fetch(`${API_URL}/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${YOUR_JWT_TOKEN}`,
+        },
         body: JSON.stringify({ confirmed: true }),
       });
       if (!response.ok) throw new Error('Failed to approve user');
@@ -90,16 +101,59 @@ const AuthorizePage = () => {
     }
   };
 
-  const handleReject = async (id) => {
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this user?')) return;
     try {
       const response = await fetch(`${API_URL}/${id}`, {
         method: 'DELETE',
       });
-      if (!response.ok) throw new Error('Failed to reject user');
+      if (!response.ok) throw new Error('Failed to delete user');
       setUsers(users.filter((user) => user.id !== id));
     } catch (err) {
-      console.error('Reject user error:', err);
-      alert('Failed to reject user');
+      console.error('Delete user error:', err);
+      alert('Failed to delete user');
+    }
+  };
+
+  const handleEdit = (user) => {
+    setEditingUser({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingUser.username) {
+      alert('Username is required');
+      return;
+    }
+    if (!isValidEmail(editingUser.email)) {
+      alert('Invalid email format');
+      return;
+    }
+    try {
+      const response = await fetch(`${API_URL}/${editingUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: editingUser.username,
+          email: editingUser.email,
+          role: { name: editingUser.role },
+        }),
+      });
+      if (!response.ok) throw new Error('Failed to update user');
+      setUsers(
+        users.map((user) =>
+          user.id === editingUser.id ? { ...user, ...editingUser } : user
+        )
+      );
+      setEditingUser(null);
+    } catch (err) {
+      console.error('Update user error:', err);
+      alert('Failed to update user');
     }
   };
 
@@ -123,6 +177,7 @@ const AuthorizePage = () => {
         body: JSON.stringify({
           username: newUser.username,
           email: newUser.email,
+          password: newUser.password,
           role: { name: newUser.role },
           confirmed: false,
         }),
@@ -132,18 +187,22 @@ const AuthorizePage = () => {
       setUsers([
         ...users,
         {
-          id: createdUser.data.id,
-          username: createdUser.data.username,
-          email: createdUser.data.email,
-          role: createdUser.data.role?.name || newUser.role,
-          status: createdUser.data.confirmed ? 'Approved' : 'Pending',
+          id: createdUser.id,
+          username: createdUser.username,
+          email: createdUser.email,
+          role: createdUser.role?.name || newUser.role,
+          status: createdUser.confirmed ? 'Approved' : 'Pending',
         },
       ]);
-      setNewUser({ username: '', email: '', role: 'Public' });
+      setNewUser({ username: '', email: '', role: 'User', password: '' });
     } catch (err) {
       console.error('Create user error:', err);
       alert('Failed to create user');
     }
+  };
+
+  const handleViewDetails = (user) => {
+    setDetailUser(user);
   };
 
   const handleChangePage = (event, newPage) => {
@@ -212,25 +271,41 @@ const AuthorizePage = () => {
             value={newUser.email}
             onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
             sx={{
-              '& .muioutlinedinput-root': {
+              '& .MuiOutlinedInput-root': {
                 borderRadius: '12px',
                 background: '#fafafa',
               },
               '& .MuiInputLabel-root': { color: '#64748b' },
             }}
           />
-          <Select
-            value={newUser.role}
-            onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+          <TextField
+            label="Password"
+            type="password"
+            variant="outlined"
+            value={newUser.password}
+            onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
             sx={{
-              borderRadius: '12px',
-              background: '#fafafa',
-              '& .MuiSelect-select': { py: 1.5 },
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '12px',
+                background: '#fafafa',
+              },
+              '& .MuiInputLabel-root': { color: '#64748b' },
             }}
-          >
-            <MenuItem value="Public">Public</MenuItem>
-            <MenuItem value="Authenticated">Authenticated</MenuItem>
-          </Select>
+          />
+          <FormControl fullWidth margin="dense">
+            <InputLabel>Role</InputLabel>
+            <ModernSelect
+              value={newUser.role}
+              label="Role"
+              onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+            >
+              <MenuItem value="Owner">Owner</MenuItem>
+              <MenuItem value="Admin">Admin</MenuItem>
+              <MenuItem value="Staff">Staff</MenuItem>
+              <MenuItem value="User">User</MenuItem>
+              <MenuItem value="Pending">Pending</MenuItem>
+            </ModernSelect>
+          </FormControl>
           <Button
             variant="contained"
             onClick={handleCreateUser}
@@ -284,22 +359,73 @@ const AuthorizePage = () => {
                       transition: 'background 0.2s ease',
                     }}
                   >
-                    <TableCell sx={{ color: '#1e1e2f', fontWeight: 500 }}>{user.username}</TableCell>
-                    <TableCell sx={{ color: '#64748b' }}>{user.email}</TableCell>
+                    <TableCell sx={{ color: '#1e1e2f', fontWeight: 500 }}>
+                      {editingUser?.id === user.id ? (
+                        <TextField
+                          value={editingUser.username || ''}
+                          onChange={(e) =>
+                            setEditingUser({ ...editingUser, username: e.target.value })
+                          }
+                          size="small"
+                          fullWidth
+                          variant="outlined"
+                          sx={{ minWidth: '150px' }}
+                        />
+                      ) : (
+                        user.username
+                      )}
+                    </TableCell>
+                    <TableCell sx={{ color: '#64748b' }}>
+                      {editingUser?.id === user.id ? (
+                        <TextField
+                          value={editingUser.email || ''}
+                          onChange={(e) =>
+                            setEditingUser({ ...editingUser, email: e.target.value })
+                          }
+                          size="small"
+                          fullWidth
+                          variant="outlined"
+                          sx={{ minWidth: '200px' }}
+                        />
+                      ) : (
+                        user.email
+                      )}
+                    </TableCell>
                     <TableCell>
-                      <Select
-                        value={user.role}
-                        onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                        sx={{
-                          borderRadius: '8px',
-                          background: '#fafafa',
-                          '& .MuiSelect-select': { py: 1 },
-                          minWidth: '100px',
-                        }}
-                      >
-                        <MenuItem value="Public">Public</MenuItem>
-                        <MenuItem value="Authenticated">Authenticated</MenuItem>
-                      </Select>
+                      {editingUser?.id === user.id ? (
+                        <Select
+                          value={editingUser.role || 'User'}
+                          onChange={(e) =>
+                            setEditingUser({ ...editingUser, role: e.target.value })
+                          }
+                          size="small"
+                          fullWidth
+                          sx={{ minWidth: '120px' }}
+                        >
+                          <MenuItem value="Owner">Owner</MenuItem>
+                          <MenuItem value="Admin">Admin</MenuItem>
+                          <MenuItem value="Staff">Staff</MenuItem>
+                          <MenuItem value="User">User</MenuItem>
+                          <MenuItem value="Pending">Pending</MenuItem>
+                        </Select>
+                      ) : (
+                        <Select
+                          value={user.role}
+                          onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                          sx={{
+                            borderRadius: '8px',
+                            background: '#fafafa',
+                            '& .MuiSelect-select': { py: 1 },
+                            minWidth: '100px',
+                          }}
+                        >
+                          <MenuItem value="Owner">Owner</MenuItem>
+                          <MenuItem value="Admin">Admin</MenuItem>
+                          <MenuItem value="Staff">Staff</MenuItem>
+                          <MenuItem value="User">User</MenuItem>
+                          <MenuItem value="Pending">Pending</MenuItem>
+                        </Select>
+                      )}
                     </TableCell>
                     <TableCell
                       sx={{
@@ -310,42 +436,131 @@ const AuthorizePage = () => {
                       {user.status}
                     </TableCell>
                     <TableCell>
-                      {user.status === 'Pending' && (
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                          <Button
-                            variant="outlined"
-                            onClick={() => handleApprove(user.id)}
-                            sx={{
-                              borderRadius: '8px',
-                              borderColor: '#10b981',
-                              color: '#10b981',
-                              textTransform: 'none',
-                              '&:hover': {
-                                background: '#ecfdf5',
+                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        {editingUser?.id === user.id ? (
+                          <>
+                            <Button
+                              variant="outlined"
+                              onClick={handleSaveEdit}
+                              sx={{
+                                borderRadius: '8px',
                                 borderColor: '#10b981',
-                              },
-                            }}
-                          >
-                            Approve
-                          </Button>
-                          <Button
-                            variant="outlined"
-                            onClick={() => handleReject(user.id)}
-                            sx={{
-                              borderRadius: '8px',
-                              borderColor: '#ef4444',
-                              color: '#ef4444',
-                              textTransform: 'none',
-                              '&:hover': {
-                                background: '#fef2f2',
+                                color: '#10b981',
+                                textTransform: 'none',
+                                '&:hover': {
+                                  background: '#ecfdff',
+                                  borderColor: '#10b981',
+                                },
+                              }}
+                            >
+                              Save
+                            </Button>
+                            <Button
+                              variant="outlined"
+                              onClick={() => setEditingUser(null)}
+                              sx={{
+                                borderRadius: '8px',
+                                borderColor: '#64748b',
+                                color: '#64748b',
+                                textTransform: 'none',
+                                '&:hover': {
+                                  background: '#f1f5f9',
+                                  borderColor: '#64748b',
+                                },
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button
+                              variant="outlined"
+                              onClick={() => handleEdit(user)}
+                              sx={{
+                                borderRadius: '8px',
+                                borderColor: '#3b82f6',
+                                color: '#3b82f6',
+                                textTransform: 'none',
+                                '&:hover': {
+                                  background: '#eff6ff',
+                                  borderColor: '#3b82f6',
+                                },
+                              }}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              variant="outlined"
+                              onClick={() => handleDelete(user.id)}
+                              sx={{
+                                borderRadius: '8px',
                                 borderColor: '#ef4444',
-                              },
-                            }}
-                          >
-                            Reject
-                          </Button>
-                        </Box>
-                      )}
+                                color: '#ef4444',
+                                textTransform: 'none',
+                                '&:hover': {
+                                  background: '#fef2f2',
+                                  borderColor: '#ef4444',
+                                },
+                              }}
+                            >
+                              Delete
+                            </Button>
+                            <Button
+                              variant="outlined"
+                              onClick={() => handleViewDetails(user)}
+                              sx={{
+                                borderRadius: '8px',
+                                borderColor: '#8b5cf6',
+                                color: '#8b5cf6',
+                                textTransform: 'none',
+                                '&:hover': {
+                                  background: '#f5f3ff',
+                                  borderColor: '#8b5cf6',
+                                },
+                              }}
+                            >
+                              Details
+                            </Button>
+                            {user.status === 'Pending' && (
+                              <>
+                                <Button
+                                  variant="outlined"
+                                  onClick={() => handleApprove(user.id)}
+                                  sx={{
+                                    borderRadius: '8px',
+                                    borderColor: '#10b981',
+                                    color: '#10b981',
+                                    textTransform: 'none',
+                                    '&:hover': {
+                                      background: '#ecfdff',
+                                      borderColor: '#10b981',
+                                    },
+                                  }}
+                                >
+                                  Approve
+                                </Button>
+                                <Button
+                                  variant="outlined"
+                                  onClick={() => handleDelete(user.id)}
+                                  sx={{
+                                    borderRadius: '8px',
+                                    borderColor: '#ef4444',
+                                    color: '#ef4444',
+                                    textTransform: 'none',
+                                    '&:hover': {
+                                      background: '#fef2f2',
+                                      borderColor: '#ef4444',
+                                    },
+                                  }}
+                                >
+                                  Reject
+                                </Button>
+                              </>
+                            )}
+                          </>
+                        )}
+                      </Box>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -363,6 +578,27 @@ const AuthorizePage = () => {
           />
         </>
       )}
+
+      {/* Detail Modal */}
+      <Dialog open={!!detailUser} onClose={() => setDetailUser(null)}>
+        <DialogTitle>User Details</DialogTitle>
+        <DialogContent>
+          {detailUser && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Typography><strong>ID:</strong> {detailUser.id}</Typography>
+              <Typography><strong>Username:</strong> {detailUser.username}</Typography>
+              <Typography><strong>Email:</strong> {detailUser.email}</Typography>
+              <Typography><strong>Role:</strong> {detailUser.role}</Typography>
+              <Typography><strong>Status:</strong> {detailUser.status}</Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDetailUser(null)} color="primary">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

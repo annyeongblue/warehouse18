@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Paper,
@@ -17,6 +17,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
+import { useNavigate } from 'react-router-dom';
 
 // Custom styled components
 const ProfilePaper = styled(Paper)(({ theme }) => ({
@@ -38,11 +39,15 @@ const ProfileAvatar = styled(Avatar)(({ theme }) => ({
 }));
 
 const ProfileManagement = () => {
+  const navigate = useNavigate();
+
+  // Initialize user state with default values
   const [user, setUser] = useState({
-    name: 'Loungfar Thammavisan',
-    username: '@bleuu',
-    email: 'loungfar.tham@gmail.com',
-    password: '', // Initial password is empty (for demo purposes)
+    firstname: '',
+    lastname: '',
+    username: '',
+    email: '',
+    password: '',
   });
 
   const [isEditing, setIsEditing] = useState(false);
@@ -50,15 +55,52 @@ const ProfileManagement = () => {
   const [avatarFile, setAvatarFile] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '' });
 
+  // Fetch user data from localStorage on component mount
+  useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+    if (storedUser) {
+      // Map stored user data to the component's user state
+      setUser({
+        firstname: storedUser.firstname || '',
+        lastname: storedUser.lastname || '',
+        username: storedUser.username || `@${storedUser.email.split('@')[0]}` || '',
+        email: storedUser.email || '',
+        password: '', // Password should not be stored in localStorage for security
+      });
+      setEditUser({
+        firstname: storedUser.firstname || '',
+        lastname: storedUser.lastname || '',
+        username: storedUser.username || `@${storedUser.email.split('@')[0]}` || '',
+        email: storedUser.email || '',
+        password: '',
+      });
+    } else {
+      // Redirect to login if no user data is found
+      navigate('/login');
+    }
+  }, [navigate]);
+
   const handleEdit = () => {
     setIsEditing(true);
     setEditUser({ ...user });
   };
 
   const handleSave = () => {
+    // Update user state
     setUser({ ...editUser });
     setIsEditing(false);
     setSnackbar({ open: true, message: 'Profile updated successfully!' });
+
+    // Update localStorage with new user data
+    const updatedUser = {
+      firstname: editUser.firstname,
+      lastname: editUser.lastname,
+      username: editUser.username,
+      email: editUser.email,
+      // Do not store password in localStorage
+    };
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+
     // Simulate API call
     console.log('Saving user data:', editUser);
   };
@@ -82,7 +124,7 @@ const ProfileManagement = () => {
   };
 
   return (
-    <Container maxWidth="" sx={{ minHeight: '100vh' }}>
+    <Container maxWidth="lg" sx={{ minHeight: '100vh' }}>
       <ProfilePaper elevation={0}>
         {/* Header */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
@@ -155,7 +197,7 @@ const ProfileManagement = () => {
           {/* Avatar Section */}
           <Grid item xs={12} md={4} sx={{ textAlign: 'center' }}>
             <ProfileAvatar
-              alt={user.name}
+              alt={`${user.firstname} ${user.lastname}`}
               src={avatarFile || 'https://via.placeholder.com/150'}
             />
             {isEditing && (
@@ -200,9 +242,29 @@ const ProfileManagement = () => {
             <Box component="form" noValidate>
               <TextField
                 fullWidth
-                label="Full Name"
-                name="name"
-                value={isEditing ? editUser.name : user.name}
+                label="First Name"
+                name="firstname"
+                value={isEditing ? editUser.firstname : user.firstname}
+                onChange={handleChange}
+                disabled={!isEditing}
+                margin="normal"
+                variant="outlined"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '12px',
+                    background: isEditing ? '#fafafa' : '#fff',
+                  },
+                  '& .MuiInputLabel-root': { color: '#64748b' },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: isEditing ? '#e2e8f0' : 'transparent',
+                  },
+                }}
+              />
+              <TextField
+                fullWidth
+                label="Last Name"
+                name="lastname"
+                value={isEditing ? editUser.lastname : user.lastname}
                 onChange={handleChange}
                 disabled={!isEditing}
                 margin="normal"
