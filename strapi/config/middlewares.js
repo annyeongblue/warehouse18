@@ -18,3 +18,5 @@ module.exports = [
   'strapi::favicon', // Serves favicon
   'strapi::public', // Serves static files
 ];
+
+// , 'http://localhost:3000'

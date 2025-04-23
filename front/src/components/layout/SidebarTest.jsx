@@ -414,7 +414,7 @@ export default function Sidebar({ open, handleDrawerToggle }) {
         </ListItem>
 
         {/* Requests */}
-        <ListItem disablePadding>
+        {/* <ListItem disablePadding>
           <ListItemButton
             selected={selected === 9}
             component={Link}
@@ -433,7 +433,7 @@ export default function Sidebar({ open, handleDrawerToggle }) {
             </ListItemIcon>
             <ListItemText primary="Requests" sx={{ transition: 'opacity 0.3s ease', opacity: open ? 1 : 0 }} />
           </ListItemButton>
-        </ListItem>
+        </ListItem> */}
 
         {/* History */}
         <ListItem disablePadding>

@@ -53,12 +53,6 @@
       "relation": "oneToMany",
       "target": "api::user-1.user-1",
       "mappedBy": "auth"
-    },
-    "borrows": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::borrow.borrow",
-      "mappedBy": "article"
     }
   }
 }

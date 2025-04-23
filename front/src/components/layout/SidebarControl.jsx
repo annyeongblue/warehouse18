@@ -30,11 +30,29 @@ export default function SideTest() {
       '/borrow': 'Borrow',
       '/export': 'Export',
       '/repair': 'Repair',
-      '/requests': 'Requests',
+      // '/requests': 'Requests',
       '/history': 'History',
       '/users': 'Users',
+      '/order_detail/:id': 'Order Detail',
     };
-    setActivePage(pathToTitle[location.pathname] || 'Dashboard');
+
+    // Dynamic route patterns
+    const dynamicRoutes = [
+      { pattern: /^\/order_detail\/[^/]+$/, title: 'Order Detail' },
+      { pattern: /^\/import_detail\/[^/]+$/, title: 'Import Detail' },
+      { pattern: /^\/borrow_detail\/[^/]+$/, title: 'Borrow Detail' },
+      { pattern: /^\/export_detail\/[^/]+$/, title: 'Export Detail' },
+      { pattern: /^\/repair_detail\/[^/]+$/, title: 'Repair Detail' },
+    ];
+
+    // Check dynamic routes first
+    const matchedDynamicRoute = dynamicRoutes.find(route => route.pattern.test(location.pathname));
+    if (matchedDynamicRoute) {
+      setActivePage(matchedDynamicRoute.title);
+    } else {
+      // Fallback to static routes or default to 'Dashboard'
+      setActivePage(pathToTitle[location.pathname] || 'Dashboard');
+    }
   }, [location]);
 
   return (

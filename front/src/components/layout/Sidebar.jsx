@@ -172,14 +172,14 @@ export default function SidebarComponent({ open, handleDrawerToggle, activePage,
           </ListItemButton>
         </ListItem>
 
-        <ListItem disablePadding>
+        {/* <ListItem disablePadding>
           <ListItemButton component={Link} to="/requests" onClick={() => setActivePage('Requests')}>
             <ListItemIcon>
               <Return />
             </ListItemIcon>
             <ListItemText primary="Requests" />
           </ListItemButton>
-        </ListItem>
+        </ListItem> */}
       </List>
     </Drawer>
   );

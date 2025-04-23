@@ -4,13 +4,9 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableContainer,
-  TableHead,
   TableRow,
   TablePagination,
-  TextField,
   Grid,
-  Select,
   MenuItem,
   InputLabel,
   FormControl,
@@ -18,18 +14,24 @@ import {
   Typography,
   Button as MuiButton,
   Fade,
+  IconButton,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  TextField,
 } from '@mui/material';
-// import { styled } from '@mui/material/styles';
 import SearchBar from '../components/common/SearchBar';
 import { ModernBox, ModernTextField, ModernButton, ModernPaper, ModernTableContainer, ModernTableRow, ModernTableHead, ModernSelect } from '../styles/styles';
+import EditIcon from '@mui/icons-material/EditRounded';
+import DeleteIcon from '@mui/icons-material/DeleteRounded';
 
-// Data Arrays (unchanged)
 const ItemType = [
   { id: 1, name: 'Export' },
   { id: 2, name: 'Borrow' },
 ];
 
-// AddItem Component
 function AddItem({
   itemName, setItemName,
   itemType, setItemType,
@@ -40,9 +42,10 @@ function AddItem({
   unit, setUnit,
   brand, setBrand,
   serial, setSerial,
-  units, brands, categories
+  units, brands, categories,
+  isEditing, editingItem, setIsEditing, setEditingItem
 }) {
-  const handleAddItem = async () => {
+  const handleAddOrUpdateItem = async () => {
     if (!itemName || !itemType || !itemQuantity) {
       alert("Please fill out all required fields.");
       return;
@@ -65,12 +68,6 @@ function AddItem({
       return;
     }
 
-    const itemExists = items.some((item) => item?.name?.toLowerCase() === itemName.toLowerCase());
-    if (itemExists) {
-      alert("Item already exists.");
-      return;
-    }
-
     const safeCategories = Array.isArray(categories) ? categories : [];
     const safeUnits = Array.isArray(units) ? units : [];
     const safeBrands = Array.isArray(brands) ? brands : [];
@@ -84,44 +81,51 @@ function AddItem({
       ...(category && safeCategories.length > 0 && { category: { connect: [{ id: safeCategories.find(c => c?.name === category)?.id }] } }),
       ...(unit && safeUnits.length > 0 && { unit: { connect: [{ id: safeUnits.find(u => u?.name === unit)?.id }] } }),
       ...(brand && safeBrands.length > 0 && { brand: { connect: [{ id: safeBrands.find(b => b?.name === brand)?.id }] } }),
-      ...(serial && { item_informations: { create: [{ serial }] } }),
+      ...(serial && { item_information: { create: [{ serial }] } }),
     };
 
-    console.log('Sending new item:', JSON.stringify(newItem, null, 2));
-
     try {
-      const response = await fetch('http://localhost:1337/api/items?populate[0]=category&populate[1]=brand&populate[2]=unit&populate[3]=item_informations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: newItem }),
-      });
+      let response;
+      let addedItem;
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to add item: ${response.status} - ${errorText}`);
+      if (isEditing) {
+        response = await fetch(`http://localhost:1337/api/items/${editingItem.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data: newItem }),
+        });
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to update item: ${response.status} - ${errorText}`);
+        }
+        addedItem = await response.json();
+        setItems((prevItems) => prevItems.map(item => item.id === editingItem.id ? { ...item, ...newItem } : item));
+        alert("Item updated successfully!");
+      } else {
+        response = await fetch('http://localhost:1337/api/items?populate=*', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data: newItem }),
+        });
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to add item: ${response.status} - ${errorText}`);
+        }
+        addedItem = await response.json();
+        const formattedItem = {
+          id: addedItem.data?.id || 'unknown',
+          name: addedItem.data?.name || itemName,
+          type: addedItem.data?.type || newItem.type,
+          quantity: addedItem.data?.qty || quantity,
+          des: addedItem.data?.description || description || '',
+          category: addedItem.data?.category?.name || category || '',
+          unit: addedItem.data?.unit?.name || unit || '',
+          brand: addedItem.data?.brand?.name || brand || '',
+          serial: addedItem.data?.item_information?.serial || null,
+        };
+        setItems((prevItems) => [...prevItems, formattedItem]);
+        alert("Item added successfully!");
       }
-
-      const addedItem = await response.json();
-      console.log('API response:', JSON.stringify(addedItem, null, 2));
-
-      const formattedItem = {
-        id: addedItem.data?.id || 'unknown',
-        name: addedItem.data?.name || itemName,
-        type: addedItem.data?.type || newItem.type,
-        quantity: addedItem.data?.qty || quantity,
-        des: addedItem.data?.description || description || '',
-        category: addedItem.data?.category?.name || category || '',
-        unit: addedItem.data?.unit?.name || unit || '',
-        brand: addedItem.data?.brand?.name || brand || '',
-        serial: addedItem.data?.item_informations?.[0]?.serial || serial || null,
-      };
-
-      setItems((prevItems) => {
-        const newItems = [...prevItems, formattedItem];
-        console.log('Updated items:', newItems);
-        return newItems;
-      });
-      alert("Item added successfully!");
 
       setItemName('');
       setItemType('');
@@ -131,28 +135,29 @@ function AddItem({
       setUnit('');
       setBrand('');
       setSerial('');
+      setIsEditing(false);
+      setEditingItem(null);
     } catch (error) {
-      console.error('Error adding item:', error);
-      alert(`Failed to add item: ${error.message}`);
+      console.error('Error adding/updating item:', error);
+      alert(`Failed to add/update item: ${error.message}`);
     }
   };
 
   return (
     <ModernButton
       variant="contained"
-      onClick={handleAddItem}
+      onClick={handleAddOrUpdateItem}
       sx={{
         background: 'linear-gradient(45deg, #6C63FF 30%, #897CFF 90%)',
         '&:hover': { background: 'linear-gradient(45deg, #5A54E6 30%, #7369E6 90%)' },
       }}
     >
-      Add Item
+      {isEditing ? 'Update Item' : 'Add Item'}
     </ModernButton>
   );
 }
 
-// Main InventoryTest Component
-const InventoryTest = () => {
+const Items = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [page, setPage] = useState(0);
   const [itemName, setItemName] = useState('');
@@ -172,18 +177,24 @@ const InventoryTest = () => {
   const [brands, setBrands] = useState([]);
   const [categories, setCategories] = useState([]);
   const [refetch, setRefetch] = useState(0);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
 
-        const itemResponse = await fetch('http://localhost:1337/api/items?populate[0]=category&populate[1]=brand&populate[2]=unit&populate[3]=item_informations');
+        const itemResponse = await fetch('http://localhost:1337/api/items?populate=*');
+        
         if (!itemResponse.ok) {
           const errorText = await itemResponse.text();
           throw new Error(`Failed to fetch items: ${itemResponse.status} - ${errorText}`);
         }
         const itemData = await itemResponse.json();
+        console.log('Raw item data:', itemData);
 
         const itemsArray = itemData.data.map((item, index) => ({
           id: item.id || `unknown-${index}`,
@@ -194,7 +205,8 @@ const InventoryTest = () => {
           category: item.category?.name || '',
           unit: item.unit?.name || '',
           brand: item.brand?.name || '',
-          serial: item.item_informations?.[0]?.serial || null,
+          serial: item.item_information?.[0]?.serial || null,
+          item_information: item.item_information || null,
         }));
         console.log('Fetched items:', itemsArray);
         setItems(itemsArray);
@@ -247,8 +259,42 @@ const InventoryTest = () => {
     return matchesSearch && matchesViewMode;
   });
 
-  // if (loading) return <Box sx={{ p: 3, textAlign: 'center', color: '#666' }}>Loading...</Box>;
-  // if (error) return <Box sx={{ p: 3, color: 'error.main' }}>Error: {error}</Box>;
+  const handleEdit = (item) => {
+    setIsEditing(true);
+    setEditingItem(item);
+    setItemName(item.name);
+    setItemType(item.type === 'ເຄື່ອງໃຊ້ທົ່ວໄປ' ? 'Export' : 'Borrow');
+    setItemQuantity(item.quantity.toString());
+    setDescription(item.des);
+    setCategory(item.category);
+    setUnit(item.unit);
+    setBrand(item.brand);
+    setSerial(item.serial);
+  };
+
+  const handleDelete = (id) => {
+    setItemToDelete(id);
+    setOpenDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      const response = await fetch(`http://localhost:1337/api/items/${itemToDelete}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to delete item: ${response.status} - ${errorText}`);
+      }
+      setItems(items.filter(item => item.id !== itemToDelete));
+      setOpenDeleteDialog(false);
+      setItemToDelete(null);
+      alert("Item deleted successfully!");
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      alert(`Failed to delete item: ${error.message}`);
+    }
+  };
 
   return (
     <ModernBox>
@@ -423,6 +469,10 @@ const InventoryTest = () => {
                 units={units}
                 brands={brands}
                 categories={categories}
+                isEditing={isEditing}
+                editingItem={editingItem}
+                setIsEditing={setIsEditing}
+                setEditingItem={setEditingItem}
               />
             </Grid>
             <SearchBar
@@ -444,11 +494,12 @@ const InventoryTest = () => {
                     <TableCell>Quantity</TableCell>
                     {viewMode === 'borrow' && <TableCell>Serial</TableCell>}
                     <TableCell>Description</TableCell>
+                    <TableCell>Action</TableCell>
                   </TableRow>
                 </ModernTableHead>
                 <TableBody>
                   {filteredItems.length > 0 ? (
-                    filteredItems.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((item) => (
+                    filteredItems.slice(page * rowsPerPage, page * rowsPerPage +    rowsPerPage).map((item) => (
                       <ModernTableRow key={item.id}>
                         <TableCell>{item.id}</TableCell>
                         <TableCell>{item.name}</TableCell>
@@ -459,6 +510,14 @@ const InventoryTest = () => {
                         <TableCell>{item.quantity}</TableCell>
                         {viewMode === 'borrow' && <TableCell>{item.serial || '-'}</TableCell>}
                         <TableCell>{item.des}</TableCell>
+                        <TableCell>
+                          <IconButton color="primary" onClick={() => handleEdit(item)}>
+                            <EditIcon />
+                          </IconButton>
+                          <IconButton color="primary" onClick={() => handleDelete(item.id)}>
+                            <DeleteIcon />
+                          </IconButton>
+                        </TableCell>
                       </ModernTableRow>
                     ))
                   ) : (
@@ -490,4 +549,4 @@ const InventoryTest = () => {
   );
 };
 
-export default InventoryTest;
+export default Items;

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Grid, Typography, Card, CardContent } from '@mui/material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import AuthProvider from '../components/ProtectedRoute';
 
 // Sample data for the graph
 const data = [

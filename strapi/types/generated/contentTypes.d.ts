@@ -414,7 +414,6 @@ export interface ApiArticleArticle extends Struct.CollectionTypeSchema {
     blocks: Schema.Attribute.DynamicZone<
       ['shared.media', 'shared.quote', 'shared.rich-text', 'shared.slider']
     >;
-    borrows: Schema.Attribute.Relation<'oneToMany', 'api::borrow.borrow'>;
     cover: Schema.Attribute.Media<'images' | 'files' | 'videos'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -506,10 +505,9 @@ export interface ApiBorrowDetailBorrowDetail
     singularName: 'borrow-detail';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
-    borrow: Schema.Attribute.Relation<'manyToOne', 'api::borrow.borrow'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -538,10 +536,9 @@ export interface ApiBorrowBorrow extends Struct.CollectionTypeSchema {
     singularName: 'borrow';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
-    article: Schema.Attribute.Relation<'manyToOne', 'api::article.article'>;
     borrow_approver: Schema.Attribute.Relation<
       'manyToOne',
       'api::user-1.user-1'
@@ -550,7 +547,10 @@ export interface ApiBorrowBorrow extends Struct.CollectionTypeSchema {
       'oneToMany',
       'api::borrow-detail.borrow-detail'
     >;
-    borrow_user: Schema.Attribute.Relation<'manyToOne', 'api::user-1.user-1'>;
+    borrow_user: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
     comment: Schema.Attribute.String;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -563,6 +563,10 @@ export interface ApiBorrowBorrow extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
+    return_approvers: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::user-1.user-1'
+    >;
     return_comment: Schema.Attribute.String;
     return_date: Schema.Attribute.Date;
     statas: Schema.Attribute.String;
@@ -615,7 +619,11 @@ export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     description: Schema.Attribute.String;
-    item: Schema.Attribute.Relation<'oneToMany', 'api::item.item'>;
+    items: Schema.Attribute.Relation<'oneToMany', 'api::item.item'>;
+    item_tests: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::item-test.item-test'
+    >;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -640,14 +648,13 @@ export interface ApiExportDetailExportDetail
     singularName: 'export-detail';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     description: Schema.Attribute.String;
-    export: Schema.Attribute.Relation<'manyToOne', 'api::export.export'>;
     item: Schema.Attribute.Relation<'manyToOne', 'api::item.item'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
@@ -672,7 +679,7 @@ export interface ApiExportExport extends Struct.CollectionTypeSchema {
     singularName: 'export';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     comment: Schema.Attribute.String;
@@ -777,7 +784,7 @@ export interface ApiImportImport extends Struct.CollectionTypeSchema {
     singularName: 'import';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     createdAt: Schema.Attribute.DateTime;
@@ -800,6 +807,7 @@ export interface ApiImportImport extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    user_1: Schema.Attribute.Relation<'oneToMany', 'api::user-1.user-1'>;
   };
 }
 
@@ -813,14 +821,14 @@ export interface ApiItemInformationItemInformation
     singularName: 'item-information';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     description: Schema.Attribute.String;
-    item: Schema.Attribute.Relation<'manyToOne', 'api::item.item'>;
+    items: Schema.Attribute.Relation<'oneToMany', 'api::item.item'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -839,6 +847,37 @@ export interface ApiItemInformationItemInformation
   };
 }
 
+export interface ApiItemTestItemTest extends Struct.CollectionTypeSchema {
+  collectionName: 'item_tests';
+  info: {
+    description: '';
+    displayName: 'item_test';
+    pluralName: 'item-tests';
+    singularName: 'item-test';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    category: Schema.Attribute.String;
+    categoryy: Schema.Attribute.Relation<'manyToOne', 'api::category.category'>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::item-test.item-test'
+    > &
+      Schema.Attribute.Private;
+    name: Schema.Attribute.String;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiItemItem extends Struct.CollectionTypeSchema {
   collectionName: 'items';
   info: {
@@ -848,7 +887,7 @@ export interface ApiItemItem extends Struct.CollectionTypeSchema {
     singularName: 'item';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     borrow_details: Schema.Attribute.Relation<
@@ -869,8 +908,8 @@ export interface ApiItemItem extends Struct.CollectionTypeSchema {
       'oneToMany',
       'api::import-detail.import-detail'
     >;
-    item_informations: Schema.Attribute.Relation<
-      'oneToMany',
+    item_information: Schema.Attribute.Relation<
+      'manyToOne',
       'api::item-information.item-information'
     >;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
@@ -937,7 +976,7 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
     singularName: 'order';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     check_import: Schema.Attribute.Boolean;
@@ -954,12 +993,15 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
       'oneToMany',
       'api::order-detail.order-detail'
     >;
+    order_user: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
     publishedAt: Schema.Attribute.DateTime;
     statas: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    user_1: Schema.Attribute.Relation<'manyToOne', 'api::user-1.user-1'>;
   };
 }
 
@@ -973,7 +1015,7 @@ export interface ApiRepairDetailRepairDetail
     singularName: 'repair-detail';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     comment: Schema.Attribute.String;
@@ -1009,7 +1051,7 @@ export interface ApiRepairRepair extends Struct.CollectionTypeSchema {
     singularName: 'repair';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     createdAt: Schema.Attribute.DateTime;
@@ -1114,7 +1156,10 @@ export interface ApiUser1User1 extends Struct.CollectionTypeSchema {
       'api::repair.repair'
     >;
     auths: Schema.Attribute.Relation<'oneToMany', 'api::auth.auth'>;
-    borrows: Schema.Attribute.Relation<'oneToMany', 'api::borrow.borrow'>;
+    borrow_approver: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::borrow.borrow'
+    >;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1130,7 +1175,6 @@ export interface ApiUser1User1 extends Struct.CollectionTypeSchema {
       'api::user-1.user-1'
     > &
       Schema.Attribute.Private;
-    orders: Schema.Attribute.Relation<'oneToMany', 'api::order.order'>;
     password: Schema.Attribute.Password;
     photo: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
     publishedAt: Schema.Attribute.DateTime;
@@ -1596,10 +1640,10 @@ export interface PluginUsersPermissionsUser
   };
   options: {
     draftAndPublish: false;
-    timestamps: true;
   };
   attributes: {
     blocked: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    borrows: Schema.Attribute.Relation<'oneToMany', 'api::borrow.borrow'>;
     confirmationToken: Schema.Attribute.String & Schema.Attribute.Private;
     confirmed: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     createdAt: Schema.Attribute.DateTime;
@@ -1610,17 +1654,22 @@ export interface PluginUsersPermissionsUser
       Schema.Attribute.SetMinMaxLength<{
         minLength: 6;
       }>;
+    firstname: Schema.Attribute.String;
+    gender: Schema.Attribute.String;
+    lastname: Schema.Attribute.String;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
       'plugin::users-permissions.user'
     > &
       Schema.Attribute.Private;
+    orders: Schema.Attribute.Relation<'oneToMany', 'api::order.order'>;
     password: Schema.Attribute.Password &
       Schema.Attribute.Private &
       Schema.Attribute.SetMinMaxLength<{
         minLength: 6;
       }>;
+    photo: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
     provider: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     resetPasswordToken: Schema.Attribute.String & Schema.Attribute.Private;
@@ -1664,6 +1713,7 @@ declare module '@strapi/strapi' {
       'api::import-detail.import-detail': ApiImportDetailImportDetail;
       'api::import.import': ApiImportImport;
       'api::item-information.item-information': ApiItemInformationItemInformation;
+      'api::item-test.item-test': ApiItemTestItemTest;
       'api::item.item': ApiItemItem;
       'api::order-detail.order-detail': ApiOrderDetailOrderDetail;
       'api::order.order': ApiOrderOrder;

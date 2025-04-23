@@ -1,4 +1,4 @@
-import React, { use, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Table,
@@ -15,35 +15,41 @@ import SearchBar from '../components/common/SearchBar';
 import { ModernBox, ModernButton, ModernPaper, ModernTableContainer, ModernTableHead, ModernTableRow, ModernTextField, ModernSelect } from '../styles/styles';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:1337/api/item-informations?populate=item';
+const API_URL = 'http://localhost:1337/api/item-informations';
+const ITEMS_API_URL = 'http://localhost:1337/api/items';
 const API_TOKEN = import.meta.env.VITE_API_TOKEN;
 
 // AddItem Component
 function AddItem({ items, item, setItem, itemSerial, setItemSerial, description, setDescription, itemInfo, setItemInfo }) {
   const handleAddItem = async () => {
-    if (!itemSerial) {
-      alert("Please fill out all fields.");
+    if (!itemSerial || !description) {
+      alert('Please fill out all fields.');
       return;
     }
 
     try {
-      // const selectedItem = items.find((i) => i.name === item);
       const response = await axios.post(
         API_URL,
-        { data: { serial: itemSerial, description: description }}, // , item: selectedItem?.id
-        { headers: { Authorization: `Bearer ${API_TOKEN}`}}
+        {
+          data: {
+            serial: itemSerial,
+            description,
+            items: [item], // Send items as an array of IDs
+          },
+        },
+        { headers: { Authorization: `Bearer ${API_TOKEN}` } }
       );
 
       const newItemInfo = {
         id: response.data.data.id,
         serial: response.data.data.serial || itemSerial,
-        // item: itemInfo.item?.data?.name || 'N/A',
-        description: response.data.data.description,
-      }
+        item: response.data.data.items?.[0]?.name || 'N/A',
+        description: response.data.data.description || description,
+      };
       setItemInfo([newItemInfo, ...itemInfo]);
       setItemSerial('');
-      // setItem('');
       setDescription('');
+      setItem('');
     } catch (err) {
       alert(`Error adding item serial: ${err.response?.data?.error?.message || err.message}`);
     }
@@ -60,49 +66,72 @@ const InventoryTest = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [page, setPage] = useState(0);
   const [itemSerial, setItemSerial] = useState('');
-  const [description, setDescription] = useState(''); // Added state for item name
-  const [itemInfo, setitemInfo] = useState([]);
+  const [description, setDescription] = useState('');
+  const [itemInfo, setItemInfo] = useState([]); // Fixed typo
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState(null);
   const [item, setItem] = useState('');
   const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const fetchItemInfo = async () => {
     try {
-      const response = await axios.get(API_URL, {
-        headers: { Authorization: `Bearer ${API_TOKEN} `},
+      const response = await axios.get(`${API_URL}?populate=*`, {
+        headers: { Authorization: `Bearer ${API_TOKEN}` },
       });
       const data = response.data.data;
-      const formattedData = data.map((itemInfo) => ({
-        id: itemInfo.id,
-        serial: itemInfo.serial || 'N/A',
-        item: itemInfo.item?.name || 'N/A',
-        description: itemInfo.description || 'N/A',
-      }));
-      setitemInfo(formattedData);
-      console.log('Formatted intemInfo:', formattedData);
+      console.log('Item info raw response:', data);
 
-      const itemsResponse = await fetch ('http://localhost:1337/api/items');
-      if (!itemsResponse.ok) {
-        const errorText = await itemsResponse.text();
-        throw new Error(`Failed to fetch items: ${itemsResponse.status} - ${errorText}`);
-      }
-      const itemsData = await itemsResponse.json();
-      console.log('Raw items response:', itemsData);
-
-      const itemsArray = itemsData.data.map((item, index) => ({
-        id: item?.id || `item-${index}`,
-        name: item?.name || 'Unknown',
-      }));
-      setItems(itemsArray);
-
+      const infosArray = Array.isArray(data)
+        ? data.map((info) => ({
+            id: info.id,
+            serial: info.serial || 'N/A',
+            item: info.items?.[0].name || 'N/ASS', // Adjust based on Strapi response
+            description: info.description || 'N/A',
+          }))
+        : [];
+      setItemInfo(infosArray);
     } catch (err) {
-      setError(err.response?.data?.error?.message || err.message);
+      const errorMessage = err.response?.data?.error?.message || err.message;
+      setError(errorMessage);
+      alert(`Failed to fetch item information: ${errorMessage}`);
+    }
+  };
+
+  const fetchItems = async () => {
+    try {
+      const response = await axios.get(ITEMS_API_URL, {
+        headers: { Authorization: `Bearer ${API_TOKEN}` },
+      });
+      const data = response.data.data;
+      console.log('Items raw response:', data);
+
+      const itemsArray = Array.isArray(data)
+        ? data.map((item) => ({
+            id: item.id,
+            name: item.name || 'N/A',
+          }))
+        : [];
+      setItems(itemsArray);
+    } catch (err) {
+      const errorMessage = err.response?.data?.error?.message || err.message;
+      setError(errorMessage);
+      alert(`Failed to fetch items: ${errorMessage}`);
     }
   };
 
   useEffect(() => {
-    fetchItemInfo();
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        await Promise.all([fetchItemInfo(), fetchItems()]);
+      } catch (err) {
+        console.error('Fetch error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
   }, []);
 
   const handleChangePage = (event, newPage) => setPage(newPage);
@@ -117,38 +146,38 @@ const InventoryTest = () => {
 
   return (
     <ModernBox>
-      <Fade in={true} timeout={800}>       
+      <Fade in={true} timeout={800}>
         <Box>
           {/* Form */}
           <ModernPaper>
             <ModernTextField
-            autoFocus
+              autoFocus
               margin="dense"
               label="Serial Number"
               fullWidth
               variant="outlined"
               value={itemSerial}
               onChange={(e) => setItemSerial(e.target.value)}
-              sx={{mb: 0.7}}
+              sx={{ mb: 0.7 }}
             />
 
-            {/* <FormControl fullWidth margin="dense">
+            {/* Uncomment to re-enable item selection */}
+            <FormControl fullWidth margin="dense">
               <InputLabel>Item</InputLabel>
               <ModernSelect
                 label="Item"
                 variant="outlined"
                 value={item}
                 onChange={(e) => setItem(e.target.value)}
-                sx={{mb: 0.3}}
+                sx={{ mb: 0.3 }}
               >
                 {items.map((i) => (
                   <MenuItem key={i.id} value={i.id}>
                     {i.name}
                   </MenuItem>
                 ))}
-                Add MenuItems here
               </ModernSelect>
-            </FormControl> */}
+            </FormControl>
 
             <ModernTextField
               margin="dense"
@@ -159,16 +188,19 @@ const InventoryTest = () => {
               onChange={(e) => setDescription(e.target.value)}
             />
             <AddItem
-                itemSerial={itemSerial}
-                setItemSerial={setItemSerial}
-                description={description}
-                setDescription={setDescription}
-                itemInfo={itemInfo}
-                setItemInfo={setitemInfo}
-              />
+              items={items}
+              item={item}
+              setItem={setItem}
+              itemSerial={itemSerial}
+              setItemSerial={setItemSerial}
+              description={description}
+              setDescription={setDescription}
+              itemInfo={itemInfo}
+              setItemInfo={setItemInfo}
+            />
           </ModernPaper>
 
-          <Box sx={{mt: 4}}>
+          <Box sx={{ mt: 4 }}>
             <SearchBar
               search={searchQuery}
               setSearch={setSearchQuery}
@@ -186,7 +218,6 @@ const InventoryTest = () => {
             <Table sx={{ minWidth: 500 }} aria-label="inventory table">
               <ModernTableHead>
                 <TableRow>
-                  {/* <TableCell>Item</TableCell> */}
                   <TableCell>ID</TableCell>
                   <TableCell>Serial</TableCell>
                   <TableCell>Item</TableCell>
@@ -194,9 +225,15 @@ const InventoryTest = () => {
                 </TableRow>
               </ModernTableHead>
               <TableBody>
-                {error ? (
+                {loading ? (
                   <ModernTableRow>
-                    <TableCell colSpan={3} align='center'>
+                    <TableCell colSpan={4} align="center">
+                      Loading...
+                    </TableCell>
+                  </ModernTableRow>
+                ) : error ? (
+                  <ModernTableRow>
+                    <TableCell colSpan={4} align="center">
                       Error: {error}
                     </TableCell>
                   </ModernTableRow>
@@ -211,13 +248,13 @@ const InventoryTest = () => {
                         <TableCell>{itemInfo.description}</TableCell>
                       </ModernTableRow>
                     ))
-                  ) : (
-                    <ModernTableRow>
-                      <TableCell colSpan={3} align='center'>
-                        No serials found-add some above!
-                      </TableCell>
-                    </ModernTableRow>
-                  )}
+                ) : (
+                  <ModernTableRow>
+                    <TableCell colSpan={4} align="center">
+                      No serials found - add some above!
+                    </TableCell>
+                  </ModernTableRow>
+                )}
               </TableBody>
             </Table>
           </ModernTableContainer>

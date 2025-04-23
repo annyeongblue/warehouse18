@@ -33,26 +33,27 @@ const SignUp = () => {
     const gender = event.target.gender.value;
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/register', {
-        firstname,
-        lastname,
+      const response = await axios.post('http://localhost:1337/api/auth/local/register', {
+        username: email,
         email,
         password,
+        firstname,
+        lastname,
         gender,
       });
 
-      if (response.status === 201) {
-        alert(response.data.message || 'Registration successful!');
+      if (response.status === 200) {
+        alert('Registration successful!');
         event.target.reset();
         navigate('/login');
       }
     } catch (error) {
       if (error.response) {
-        alert(error.response.data.message || 'An error occurred');
+        alert(error.response.data.error?.message || 'Registration failed. Please ty again.');
       } else if (error.request) {
-        alert('No response from server, please try again later');
+        alert('No response from server. Please check if Strapi is running');
       } else {
-        alert('Error in submitting form, please try again');
+        alert('Error in submitting form. Please try again');
       }
       console.error('Error:', error);
     }
@@ -64,9 +65,6 @@ const SignUp = () => {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        // minHeight: '100vh',
-        // background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-        // padding: 2,
       }}
     >
       <Fade in={true} timeout={800}>
@@ -90,6 +88,7 @@ const SignUp = () => {
             <Typography 
               variant="h4" 
               sx={{ 
+                fontSize: { xs: '1.5rem', md: '1.3rem' },
                 fontWeight: 700,
                 background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
                 WebkitBackgroundClip: 'text',
@@ -99,10 +98,7 @@ const SignUp = () => {
             >
               Create Account
             </Typography>
-            <Typography 
-              variant="body2" 
-              sx={{ color: 'text.secondary' }}
-            >
+            <Typography variant="body2" sx={{ color: 'text.secondary' }} >
               Join us today!
             </Typography>
           </Box>
@@ -199,7 +195,7 @@ const SignUp = () => {
               />
 
               <RadioGroup 
-                row 
+                row
                 name="gender"
                 sx={{ 
                   justifyContent: 'center',
@@ -245,26 +241,6 @@ const SignUp = () => {
               >
                 Create Account
               </Button>
-
-              {/* <Typography 
-                variant="body2" 
-                sx={{ textAlign: 'center', color: 'text.secondary' }}
-              >
-                Already have an account?{' '}
-                <Link 
-                  href="/login" 
-                  sx={{ 
-                    color: 'primary.main',
-                    textDecoration: 'none',
-                    '&:hover': { 
-                      textDecoration: 'underline',
-                      color: 'primary.dark' 
-                    }
-                  }}
-                >
-                  Sign In
-                </Link>
-              </Typography> */}
             </Box>
           </form>
         </Box>

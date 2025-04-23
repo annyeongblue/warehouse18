@@ -21,35 +21,91 @@ import { ModernBox, ModernTextField, ModernPaper, ModernTableContainer, ModernTa
 import axios from 'axios';
 
 const API_URL = 'http://localhost:1337/api/imports';
+const USER_API_URL = 'http://localhost:1337/api/user-1s';
+const ORDER_API_URL = 'http://localhost:1337/api/orders';
 const API_TOKEN = import.meta.env.VITE_API_TOKEN;
 
 const getCurrentDate = () => new Date().toISOString().split('T')[0];
 
-function AddImport({ imports, setImports, newImport, setNewImport }) {
+function AddImport({
+  date, setDate,
+  total, setTotal,
+  orders, setOrders,
+  imports, setImports,
+  isEditing, editingImport, setIsEditing, setEditingImport,
+  user_1, setUser_1,
+  users,
+  fetchImports,
+}) {
   const handleAddImport = async () => {
-    const { total } = newImport;
-    if (!total) {
-      alert("Please fill out the total and user fields.");
+    // Log input values for debugging
+    console.log('Input values:', { date, total, user_1, orders });
+
+    // Validate inputs
+    const missingFields = [];
+    if (!date) missingFields.push('date');
+    if (!total || isNaN(total) || parseFloat(total) <= 0) missingFields.push('total');
+    if (!user_1) missingFields.push('user');
+    if (!orders || isNaN(orders)) missingFields.push('order');
+
+    if (missingFields.length > 0) {
+      alert(`Please fill out all required fields: ${missingFields.join(', ')}`);
       return;
     }
 
+    // Find user ID
+    const selectedUser = users.find((user) => user.firstname === user_1);
+    const userId = selectedUser?.id;
+
+    if (!userId) {
+      alert('Selected user not found.');
+      return;
+    }
+
+    // Prepare API payload
+    const importData = {
+      data: {
+        date,
+        total: parseFloat(total),
+        user_1: { connect: [{ id: userId }] },
+        order: { connect: [{ id: parseInt(orders) }] },
+      },
+    };
+
+    console.log('API payload:', importData);
+
     try {
-      const response = await axios.post(
-        API_URL,
-        { data: { date: getCurrentDate(), total: parseFloat(total) } }, // Parse total as a number
-        { headers: { Authorization: `Bearer ${API_TOKEN}` } }
-      );
-      const newImportData = {
-        id: response.data.data.id,
-        date: response.data.data.attributes?.date || getCurrentDate(),
-        total: response.data.data.attributes?.total || total,
-        user: response.data.data.attributes?.user || user,
-      };
-      setImports([...imports, newImportData]);
-      setNewImport({ date: getCurrentDate(), total: '', user: '' });
-    } catch (err) {
-      console.error('Error adding import:', err.response?.data?.error?.message || err.message);
-      alert('Failed to add import.');
+      let response;
+      if (isEditing) {
+        response = await axios.put(
+          `${API_URL}/${editingImport.id}`,
+          importData,
+          { headers: { Authorization: `Bearer ${API_TOKEN}` } }
+        );
+        console.log('Update response:', response.data);
+        alert('Import updated successfully!');
+        } else {
+        response = await axios.post(
+          API_URL,
+          importData,
+          { headers: { Authorization: `Bearer ${API_TOKEN}` } }
+        );
+        console.log('Add response:', response.data);
+        alert('Import added successfully!');
+      }
+
+      await fetchImports();
+
+      setDate(getCurrentDate());
+      setTotal('');
+      setOrders('');
+      setUser_1('');
+      setIsEditing(false);
+      setEditingImport(null);
+    } catch (error) {
+      console.error('API error:', error.response?.data || error.message);
+      const errorMessage = error.response?.data?.error?.message || 'Failed to add/update import';
+      alert(`Error: ${errorMessage}`);
     }
   };
 
@@ -66,7 +122,7 @@ function AddImport({ imports, setImports, newImport, setNewImport }) {
         '&:hover': { background: 'linear-gradient(45deg, #1565c0, #2196f3)' },
       }}
     >
-      Add Import
+      {isEditing ? 'Update Import' : 'Add Import'}
     </ModernButton>
   );
 }
@@ -78,66 +134,84 @@ function Imports() {
   const [newImport, setNewImport] = useState({
     date: getCurrentDate(),
     total: '',
-    user: '',
+    user_1: '',
+    order: '',
   });
   const [imports, setImports] = useState([]);
-  const [editId, setEditId] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingImport, setEditingImport] = useState(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
-  const userOptions = ['Loungfar', 'Tockky', 'Nana'];
 
   const fetchImports = async () => {
     try {
-      const response = await axios.get(API_URL, {
-        headers: { Authorization: `Bearer ${API_TOKEN}` },
+      const response = await fetch(`${API_URL}?populate=*`);
+      if (!response.ok) throw new Error(`Failed to fetch imports: ${response.status}`);
+      const importData = await response.json();
+      console.log('Imports raw response:', importData);
+      const importsArray = importData.data.map((imp) => {
+        console.log('Import ID:', imp.id, 'Order:', imp.order);
+        return {
+          id: imp.id,
+          date: imp.date || getCurrentDate(),
+          total: imp.total || 0,
+          user_1: imp.user_1?.[0]?.firstname || 'Unknown',
+          order: imp.order?.id || 'No Order',
+        };
       });
-      const data = response.data.data;
-      console.log('Raw API Data:', data);
-      const formattedData = data.map((imp) => ({
-        id: imp.id,
-        date: imp.attributes?.date || getCurrentDate(),
-        total: imp.attributes?.total || 'N/A',
-        user: imp.attributes?.user || 'Unknown',
-      }));
-      console.log('Formatted imports:', formattedData);
-      setImports(formattedData);
+      setImports(importsArray);
     } catch (err) {
-      console.error('Error fetching imports:', err.response?.data?.error?.message || err.message);
-      alert('Failed to fetch imports. Check the server.');
+      console.error('Fetch error:', err);
+      alert(`Failed to fetch imports: ${err.message}`);
+    }
+  };
+
+  const fetchOrders = async () => {
+    try {
+      const response = await fetch(`${ORDER_API_URL}?populate=*`);
+      if (!response.ok) throw new Error(`Failed to fetch orders: ${response.status}`);
+      const orderData = await response.json();
+      console.log('Full order API response:', orderData);
+      const ordersArray = orderData.data.map((order) => ({
+        id: order.id,
+      }));
+      setOrders(ordersArray);
+    } catch (err) {
+      console.error('Fetch error:', err);
+      alert(`Failed to fetch orders: ${err.message}`);
     }
   };
 
   useEffect(() => {
-    fetchImports();
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        await Promise.all([fetchImports(), fetchOrders()]);
+
+        const userResponse = await fetch(USER_API_URL);
+        if (!userResponse.ok) throw new Error('Failed to fetch users');
+        const userData = await userResponse.json();
+        const usersArray = userData.data.map((user) => ({
+          id: user.id,
+          firstname: user.firstname || 'Unknown',
+        }));
+        setUsers(usersArray);
+      } catch (err) {
+        console.error('Fetch error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   const handleEdit = (imp) => {
-    setEditId(imp.id);
+    setIsEditing(true);
+    setEditingImport(imp);
     setNewImport({ ...imp });
-  };
-
-  const handleSaveEdit = async () => {
-    try {
-      const response = await axios.put(
-        `${API_URL}/${editId}`,
-        { data: { date: getCurrentDate(), total: parseFloat(newImport.total), user: newImport.user } },
-        { headers: { Authorization: `Bearer ${API_TOKEN}` } }
-      );
-      const updatedImport = {
-        id: response.data.data.id,
-        date: response.data.data.attributes?.date || getCurrentDate(),
-        total: response.data.data.attributes?.total || newImport.total,
-        user: response.data.data.attributes?.user || newImport.user,
-      };
-      setImports(
-        imports.map((imp) => (imp.id === editId ? updatedImport : imp))
-      );
-      setEditId(null);
-      setNewImport({ date: getCurrentDate(), total: '', user: '' });
-    } catch (err) {
-      console.error('Error updating import:', err.response?.data?.error?.message || err.message);
-      alert('Failed to update import.');
-    }
   };
 
   const handleDelete = async (id) => {
@@ -158,7 +232,7 @@ function Imports() {
 
   const filteredImports = imports.filter((imp) =>
     (imp.total || '').toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (imp.user || '').toLowerCase().includes(searchQuery.toLowerCase())
+    (imp.user_1 || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -166,7 +240,7 @@ function Imports() {
       {/* Form Section */}
       <ModernPaper sx={{ p: 3, mb: 4, borderRadius: '15px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={4}>
+          <Grid item xs={12} sm={6}>
             <ModernTextField
               label="Date"
               type="date"
@@ -177,7 +251,7 @@ function Imports() {
               InputLabelProps={{ shrink: true }}
             />
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid item xs={12} sm={6}>
             <ModernTextField
               label="Total"
               fullWidth
@@ -187,42 +261,57 @@ function Imports() {
               onChange={(e) => setNewImport({ ...newImport, total: e.target.value })}
             />
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid item xs={12} sm={6}>
             <FormControl fullWidth>
               <InputLabel>User</InputLabel>
               <ModernSelect
-                value={newImport.user}
+                value={newImport.user_1}
                 label="User"
-                onChange={(e) => setNewImport({ ...newImport, user: e.target.value })}
+                onChange={(e) => setNewImport({ ...newImport, user_1: e.target.value })}
               >
-                <MenuItem value="">
-                  <em>None</em>
-                </MenuItem>
-                {userOptions.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option}
+                {users.map((user) => (
+                  <MenuItem key={user.id} value={user.firstname}>
+                    {user.firstname}
                   </MenuItem>
                 ))}
               </ModernSelect>
             </FormControl>
           </Grid>
-          <Grid item xs={12} sx={{ textAlign: 'right' }}>
-            {editId ? (
-              <ModernButton
-                variant="contained"
-                onClick={handleSaveEdit}
-                sx={{
-                  borderRadius: '20px',
-                  background: 'linear-gradient(45deg, #388e3c, #66bb6a)',
-                  color: '#fff',
-                  '&:hover': { background: 'linear-gradient(45deg, #2e7d32, #4caf50)' },
-                }}
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth>
+              <InputLabel>Order Bill</InputLabel>
+              <ModernSelect
+                value={newImport.order}
+                label="Order Bill"
+                onChange={(e) => setNewImport({ ...newImport, order: e.target.value })}
               >
-                Save Edit
-              </ModernButton>
-            ) : (
-              <AddImport imports={imports} setImports={setImports} newImport={newImport} setNewImport={setNewImport} />
-            )}
+                {orders.map((bill) => (
+                  <MenuItem key={bill.id} value={bill.id}>
+                    {bill.id}
+                  </MenuItem>
+                ))}
+              </ModernSelect>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} className="text-right">
+            <AddImport
+              date={newImport.date}
+              setDate={(value) => setNewImport({ ...newImport, date: value })}
+              total={newImport.total}
+              setTotal={(value) => setNewImport({ ...newImport, total: value })}
+              user_1={newImport.user_1}
+              setUser_1={(value) => setNewImport({ ...newImport, user_1: value })}
+              orders={newImport.order}
+              setOrders={(value) => setNewImport({ ...newImport, order: value })}
+              imports={imports}
+              setImports={setImports}
+              isEditing={isEditing}
+              editingImport={editingImport}
+              setIsEditing={setIsEditing}
+              setEditingImport={setEditingImport}
+              users={users}
+              fetchImports={fetchImports}
+            />
           </Grid>
         </Grid>
       </ModernPaper>
@@ -252,6 +341,7 @@ function Imports() {
               <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Total</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>User</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Order Bill</TableCell>
               <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>Actions</TableCell>
             </TableRow>
           </ModernTableHead>
@@ -263,7 +353,8 @@ function Imports() {
                   <TableCell>{imp.id}</TableCell>
                   <TableCell>{imp.date}</TableCell>
                   <TableCell>{imp.total}</TableCell>
-                  <TableCell>{imp.user}</TableCell>
+                  <TableCell>{imp.user_1}</TableCell>
+                  <TableCell>{imp.order || 'No Order'}</TableCell>
                   <TableCell sx={{ textAlign: 'center' }}>
                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 5 }}>
                       <Button onClick={() => handleEdit(imp)} sx={{ padding: 0, minWidth: 'auto' }}>

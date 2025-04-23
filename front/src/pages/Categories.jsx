@@ -36,6 +36,7 @@ function AddCategories({
         { data: { name: categoryName }},
         { headers: { Authorization: `Bearer ${API_TOKEN}`}}
       );
+      console.log('API_TOKEN:', API_TOKEN); // for debugging
 
       const newCategory = {
         id: response.data.data.id,

@@ -13,56 +13,158 @@ import {
   MenuItem,
   Button,
   TextField,
+  TablePagination,
 } from '@mui/material';
 
-// Sample user data
-const initialUsers = [
-  { id: 1, username: 'loungfar', email: 'loungfar.tham@gmail.com', role: 'User', status: 'Pending' },
-  { id: 2, username: 'blue', email: 'loungfar27@gmail.com', role: 'Admin', status: 'Approved' },
-];
+const API_URL = 'http://localhost:1337/api/users?populate=*';
 
 const AuthorizePage = () => {
-  const [users, setUsers] = useState(initialUsers);
+  const [users, setUsers] = useState([]);
   const [search, setSearch] = useState('');
   const [newUser, setNewUser] = useState({
     username: '',
     email: '',
-    role: 'User',
+    role: 'Public',
   });
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
-  // Handle Role Change
-  const handleRoleChange = (id, newRole) => {
-    setUsers(users.map((user) => (user.id === id ? { ...user, role: newRole } : user)));
-  };
+  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  // Approve User
-  const handleApprove = (id) => {
-    setUsers(users.map((user) => (user.id === id ? { ...user, status: 'Approved' } : user)));
-  };
-
-  // Reject User
-  const handleReject = (id) => {
-    setUsers(users.filter((user) => user.id !== id));
-  };
-
-  // Add new user
-  const handleCreateUser = () => {
-    if (newUser.username && newUser.email) {
-      const newUserObject = {
-        id: users.length + 1,
-        username: newUser.username,
-        email: newUser.email,
-        role: newUser.role,
-        status: 'Pending',
-      };
-      setUsers([...users, newUserObject]);
-      setNewUser({ username: '', email: '', role: 'User' });
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(API_URL);
+      if (!response.ok) throw new Error(`Failed to fetch users: ${response.status}`);
+      const userData = await response.json();
+      console.log('User raw response:', userData);
+      
+      const usersArray = userData.map((user) => ({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role?.name || 'Public',
+        status: user.confirmed ? 'Approved' : 'Pending',
+      }));
+      setUsers(usersArray);
+    } catch (err) {
+      console.error('Fetch error:', err);
+      alert(`Failed to fetch users: ${err.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const handleRoleChange = async (id, newRole) => {
+    try {
+      const response = await fetch(`${API_URL}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: { name: newRole } }),
+      });
+      if (!response.ok) throw new Error('Failed to update role');
+      setUsers(users.map((user) => (user.id === id ? { ...user, role: newRole } : user)));
+    } catch (err) {
+      console.error('Update role error:', err);
+      alert('Failed to update role');
+    }
+  };
+
+  const handleApprove = async (id) => {
+    try {
+      const response = await fetch(`${API_URL}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirmed: true }),
+      });
+      if (!response.ok) throw new Error('Failed to approve user');
+      setUsers(users.map((user) => (user.id === id ? { ...user, status: 'Approved' } : user)));
+    } catch (err) {
+      console.error('Approve user error:', err);
+      alert('Failed to approve user');
+    }
+  };
+
+  const handleReject = async (id) => {
+    try {
+      const response = await fetch(`${API_URL}/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to reject user');
+      setUsers(users.filter((user) => user.id !== id));
+    } catch (err) {
+      console.error('Reject user error:', err);
+      alert('Failed to reject user');
+    }
+  };
+
+  const handleCreateUser = async () => {
+    if (!newUser.username) {
+      alert('Username is required');
+      return;
+    }
+    if (!isValidEmail(newUser.email)) {
+      alert('Invalid email format');
+      return;
+    }
+    if (users.some((user) => user.email === newUser.email)) {
+      alert('Email already exists');
+      return;
+    }
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: newUser.username,
+          email: newUser.email,
+          role: { name: newUser.role },
+          confirmed: false,
+        }),
+      });
+      if (!response.ok) throw new Error('Failed to create user');
+      const createdUser = await response.json();
+      setUsers([
+        ...users,
+        {
+          id: createdUser.data.id,
+          username: createdUser.data.username,
+          email: createdUser.data.email,
+          role: createdUser.data.role?.name || newUser.role,
+          status: createdUser.data.confirmed ? 'Approved' : 'Pending',
+        },
+      ]);
+      setNewUser({ username: '', email: '', role: 'Public' });
+    } catch (err) {
+      console.error('Create user error:', err);
+      alert('Failed to create user');
+    }
+  };
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const filteredUsers = users
+    .filter(
+      (user) =>
+        user.username.toLowerCase().includes(search.toLowerCase()) ||
+        user.email.toLowerCase().includes(search.toLowerCase())
+    )
+    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
   return (
     <Box sx={{ minHeight: '100vh' }}>
-      {/* Search Bar */}
       <TextField
         label="Search by username or email"
         variant="outlined"
@@ -81,7 +183,6 @@ const AuthorizePage = () => {
         }}
       />
 
-      {/* Create User Form */}
       <Paper
         sx={{
           padding: 3,
@@ -111,7 +212,7 @@ const AuthorizePage = () => {
             value={newUser.email}
             onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
             sx={{
-              '& .MuiOutlinedInput-root': {
+              '& .muioutlinedinput-root': {
                 borderRadius: '12px',
                 background: '#fafafa',
               },
@@ -127,9 +228,8 @@ const AuthorizePage = () => {
               '& .MuiSelect-select': { py: 1.5 },
             }}
           >
-            <MenuItem value="User">User</MenuItem>
-            <MenuItem value="Staff">Staff</MenuItem>
-            <MenuItem value="Admin">Admin</MenuItem>
+            <MenuItem value="Public">Public</MenuItem>
+            <MenuItem value="Authenticated">Authenticated</MenuItem>
           </Select>
           <Button
             variant="contained"
@@ -153,109 +253,116 @@ const AuthorizePage = () => {
         </Box>
       </Paper>
 
-      {/* User Table */}
-      <TableContainer
-        component={Paper}
-        sx={{
-          borderRadius: '16px',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
-          background: '#fff',
-        }}
-      >
-        <Table>
-          <TableHead>
-            <TableRow sx={{ background: '#f8fafc' }}>
-              <TableCell sx={{ fontWeight: 600, color: '#1e1e2f', py: 2 }}>Username</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: '#1e1e2f', py: 2 }}>Email</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: '#1e1e2f', py: 2 }}>Role</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: '#1e1e2f', py: 2 }}>Status</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: '#1e1e2f', py: 2 }}>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {users
-              .filter(
-                (user) =>
-                  (user.username && user.username.toLowerCase().includes(search.toLowerCase())) ||
-                  (user.email && user.email.toLowerCase().includes(search.toLowerCase()))
-              )
-              .map((user) => (
-                <TableRow
-                  key={user.id}
-                  sx={{
-                    '&:hover': { background: '#f1f5f9' },
-                    transition: 'background 0.2s ease',
-                  }}
-                >
-                  <TableCell sx={{ color: '#1e1e2f', fontWeight: 500 }}>{user.username}</TableCell>
-                  <TableCell sx={{ color: '#64748b' }}>{user.email}</TableCell>
-                  <TableCell>
-                    <Select
-                      value={user.role}
-                      onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                      sx={{
-                        borderRadius: '8px',
-                        background: '#fafafa',
-                        '& .MuiSelect-select': { py: 1 },
-                        minWidth: '100px',
-                      }}
-                    >
-                      <MenuItem value="User">User</MenuItem>
-                      <MenuItem value="Staff">Staff</MenuItem>
-                      <MenuItem value="Admin">Admin</MenuItem>
-                    </Select>
-                  </TableCell>
-                  <TableCell
+      {loading ? (
+        <Typography>Loading...</Typography>
+      ) : (
+        <>
+          <TableContainer
+            component={Paper}
+            sx={{
+              borderRadius: '16px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
+              background: '#fff',
+            }}
+          >
+            <Table>
+              <TableHead>
+                <TableRow sx={{ background: '#f8fafc' }}>
+                  <TableCell sx={{ fontWeight: 600, color: '#1e1e2f', py: 2 }}>Username</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#1e1e2f', py: 2 }}>Email</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#1e1e2f', py: 2 }}>Role</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#1e1e2f', py: 2 }}>Status</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#1e1e2f', py: 2 }}>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredUsers.map((user) => (
+                  <TableRow
+                    key={user.id}
                     sx={{
-                      color: user.status === 'Approved' ? '#10b981' : '#f59e0b',
-                      fontWeight: 500,
+                      '&:hover': { background: '#f1f5f9' },
+                      transition: 'background 0.2s ease',
                     }}
                   >
-                    {user.status}
-                  </TableCell>
-                  <TableCell>
-                    {user.status === 'Pending' && (
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Button
-                          variant="outlined"
-                          onClick={() => handleApprove(user.id)}
-                          sx={{
-                            borderRadius: '8px',
-                            borderColor: '#10b981',
-                            color: '#10b981',
-                            textTransform: 'none',
-                            '&:hover': {
-                              background: '#ecfdf5',
+                    <TableCell sx={{ color: '#1e1e2f', fontWeight: 500 }}>{user.username}</TableCell>
+                    <TableCell sx={{ color: '#64748b' }}>{user.email}</TableCell>
+                    <TableCell>
+                      <Select
+                        value={user.role}
+                        onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                        sx={{
+                          borderRadius: '8px',
+                          background: '#fafafa',
+                          '& .MuiSelect-select': { py: 1 },
+                          minWidth: '100px',
+                        }}
+                      >
+                        <MenuItem value="Public">Public</MenuItem>
+                        <MenuItem value="Authenticated">Authenticated</MenuItem>
+                      </Select>
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        color: user.status === 'Approved' ? '#10b981' : '#f59e0b',
+                        fontWeight: 500,
+                      }}
+                    >
+                      {user.status}
+                    </TableCell>
+                    <TableCell>
+                      {user.status === 'Pending' && (
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <Button
+                            variant="outlined"
+                            onClick={() => handleApprove(user.id)}
+                            sx={{
+                              borderRadius: '8px',
                               borderColor: '#10b981',
-                            },
-                          }}
-                        >
-                          Approve
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          onClick={() => handleReject(user.id)}
-                          sx={{
-                            borderRadius: '8px',
-                            borderColor: '#ef4444',
-                            color: '#ef4444',
-                            textTransform: 'none',
-                            '&:hover': {
-                              background: '#fef2f2',
+                              color: '#10b981',
+                              textTransform: 'none',
+                              '&:hover': {
+                                background: '#ecfdf5',
+                                borderColor: '#10b981',
+                              },
+                            }}
+                          >
+                            Approve
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            onClick={() => handleReject(user.id)}
+                            sx={{
+                              borderRadius: '8px',
                               borderColor: '#ef4444',
-                            },
-                          }}
-                        >
-                          Reject
-                        </Button>
-                      </Box>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                              color: '#ef4444',
+                              textTransform: 'none',
+                              '&:hover': {
+                                background: '#fef2f2',
+                                borderColor: '#ef4444',
+                              },
+                            }}
+                          >
+                            Reject
+                          </Button>
+                        </Box>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={users.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
+        </>
+      )}
     </Box>
   );
 };

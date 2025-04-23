@@ -5,8 +5,13 @@ import IconButton from '@mui/material/IconButton';
 import Badge from '@mui/material/Badge';
 import React, { useState } from 'react';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
+import { useNavigate } from 'react-router-dom';
+// import { useAuth } from '../../Controllers/AuthContext';
 
 export default function Setting() {
+  const navigate = useNavigate();
+  // const { logout } = useAuth();
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
@@ -18,19 +23,53 @@ export default function Setting() {
     setAnchorEl(null);
   };
 
+  const handleLogOut = () => {
+    localStorage.removeItem('jwt');
+    localStorage.removeItem('user');
+    // localStorage.removeItem('token');
+    // logout();
+    navigate('/');
+  };
+
+  const handleProfile = () => {
+    navigate('/uprofile');
+    handleMenuClose();
+  };
+
   const renderMobileMenu = (
     <Menu
     anchorEl={anchorEl}
     open={open}
     onClose={handleMenuClose}
+    anchorOrigin={{
+      vertical: 'top',
+      horizontal: 'right',
+    }}
+    transformOrigin={{
+      vertical: 'top',
+      horizontal: 'right',
+    }}
     >
-      <MenuItem>
-      <IconButton size='large' aria-label='show 17 new settings' color='inherit'>
-        {/* <Badge badgeContent={17} color='error'> */}
-          <AccountCircleIcon />
-        {/* </Badge> */}
+      <MenuItem onClick={handleProfile}>
+      <IconButton
+      size='large'
+      aria-label='view profile'
+      color='inherit'
+      >
+        <AccountCircleIcon />
       </IconButton>
-      <p><a href='/uprofile'>Profile</a></p>
+      Profile
+      </MenuItem>
+
+      <MenuItem onClick={handleLogOut}>
+      <IconButton
+      size='large'
+      aria-label='log out'
+      color='inherit'
+      >
+        <LogoutRoundedIcon />
+      </IconButton>
+      Log Out
       </MenuItem>
     </Menu>
   )

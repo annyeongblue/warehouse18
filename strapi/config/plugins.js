@@ -1,9 +1,11 @@
-// Strapi Backend Configuration
-// config/plugins.js
 module.exports = ({ env }) => ({
   // ...
   'users-permissions': {
+    enabled: true,
     config: {
+      register: {
+        allowedFields: ['firstname', 'lastname', 'gender'],
+      },
       providers: {
         google: {
           enabled: true,

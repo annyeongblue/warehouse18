@@ -1,10 +1,9 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import basicSsl from '@vitejs/plugin-basic-ssl';
 
 export default defineConfig({
-  plugins: [react(), basicSsl()],
-  server: {
-    https: false,
+  plugins: [react()],
+  resolve: {
+    extensions: ['.js', '.jsx'], // Ensure .jsx is included
   },
 });

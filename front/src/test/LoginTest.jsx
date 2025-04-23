@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Box, 
   Typography, 
-  TextField, 
-  Link, 
+  TextField,
   InputAdornment, 
   IconButton,
   Fade
@@ -27,21 +26,34 @@ const SignIn = () => {
     const password = event.target.password.value;
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', {
-        email,
-        password
+      const response = await axios.post('http://localhost:1337/api/auth/local', {
+        identifier: email,
+        password,
       });
 
       if (response.status === 200) {
-        alert(response.data.message || 'Login successful!');
+        localStorage.setItem('jwt', response.data.jwt);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        alert('Login successful!');
         event.target.reset();
         navigate('/dashboard');
       }
     } catch (error) {
-      console.error('Error Response:', error.response);
-      alert('An error occurred, please try again.');
+      if (error.response) {
+        alert(error.response.data.error?.message || 'Login failed. Please try again.');
+      } else if (error.request) {
+        alert('No response from server. Please check if Strapi is running.');
+      } else {
+        alert('Error in submitting form. Please try again.');
+      }
     }
   };
+
+  useEffect(() => {
+    if (localStorage.getItem('jwt')) {
+      navigate('/dashboard');
+    }
+  }, [navigate]);
 
   return (
     <Box
@@ -49,8 +61,6 @@ const SignIn = () => {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        // minHeight: '100vh',
-        // background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
         padding: 2
       }}
     >
@@ -76,10 +86,11 @@ const SignIn = () => {
               variant="h4" 
               sx={{ 
                 fontWeight: 700, 
+                fontSize: '20px',
                 background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
-                mb: 1
+                mb: 2
               }}
             >
               Welcome Back
@@ -88,7 +99,7 @@ const SignIn = () => {
               variant="body2" 
               sx={{ color: 'text.secondary' }}
             >
-              Sign in to continue your journey
+              Sign in to continue!
             </Typography>
           </Box>
 

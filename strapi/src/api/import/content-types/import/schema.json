@@ -8,7 +8,7 @@
     "description": ""
   },
   "options": {
-    "draftAndPublish": true
+    "draftAndPublish": false
   },
   "attributes": {
     "date": {
@@ -28,6 +28,11 @@
       "relation": "oneToMany",
       "target": "api::import-detail.import-detail",
       "mappedBy": "import"
+    },
+    "user_1": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::user-1.user-1"
     }
   }
 }

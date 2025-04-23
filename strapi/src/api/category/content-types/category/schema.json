@@ -18,11 +18,17 @@
     "description": {
       "type": "string"
     },
-    "item": {
+    "items": {
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::item.item",
       "mappedBy": "category"
+    },
+    "item_tests": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::item-test.item-test",
+      "mappedBy": "categoryy"
     }
   }
 }

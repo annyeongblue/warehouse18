@@ -8,7 +8,7 @@
     "description": ""
   },
   "options": {
-    "draftAndPublish": true
+    "draftAndPublish": false
   },
   "attributes": {
     "date": {
@@ -35,8 +35,7 @@
     "export_details": {
       "type": "relation",
       "relation": "oneToMany",
-      "target": "api::export-detail.export-detail",
-      "mappedBy": "export"
+      "target": "api::export-detail.export-detail"
     }
   }
 }

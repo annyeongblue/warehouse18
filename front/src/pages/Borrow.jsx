@@ -11,46 +11,55 @@ import {
   InputLabel,
   MenuItem,
   Grid,
+  CircularProgress,
 } from '@mui/material';
 import EyeOutlinedIcon from '@mui/icons-material/RemoveRedEyeOutlined';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
 import { useNavigate } from 'react-router-dom';
-import SearchBar from '../components/common/SearchBar'; // Assuming this exists
+import SearchBar from '../components/common/SearchBar';
 import { ModernBox, ModernTextField, ModernPaper, ModernTableContainer, ModernTableHead, ModernTableRow, ModernButton, ModernSelect } from '../styles/styles';
 import axios from 'axios';
 
 const API_URL = 'http://localhost:1337/api/borrows';
+const USERS_API_URL = 'http://localhost:1337/api/users';
 const API_TOKEN = import.meta.env.VITE_API_TOKEN;
 
 const getCurrentDate = () => new Date().toISOString().split('T')[0];
 
+// AddBorrow component remains unchanged for brevity
 function AddBorrow({ borrows, setBorrows, newBorrow, setNewBorrow }) {
   const handleAddBorrow = async () => {
-    const { status, borrower } = newBorrow;
-    if (!status || !borrower) {
-      alert("Please fill out required fields.");
+    const { status, user } = newBorrow;
+    if (!status || !user) {
+      alert('Please select a status and user.');
       return;
     }
 
     const borrowExists = borrows.some(
-      (borrow) => borrow.borrower && borrow.borrower.toLowerCase() === borrower.toLowerCase()
+      (borrow) => borrow.borrower && borrow.borrower.toLowerCase() === user.toLowerCase()
     );
     if (borrowExists) {
-      alert("Borrow record already exists for this borrower.");
+      alert('Borrow record already exists for this user.');
       return;
     }
 
     try {
       const response = await axios.post(
         API_URL,
-        { data: { ...newBorrow, date: getCurrentDate() } },
+        { data: { date: getCurrentDate(), statas: status, borrow_user: { username: user }, comment: newBorrow.comment } },
         { headers: { Authorization: `Bearer ${API_TOKEN}` } }
       );
-      setBorrows([...borrows, response.data.data]);
-      setNewBorrow({ date: '', status: '', borrower: '', item: '', return_date: '' });
+      setBorrows([...borrows, {
+        id: response.data.data.id,
+        borrow_date: response.data.data.date,
+        borrower: response.data.data.borrow_user?.username || '',
+        status: response.data.data.statas || 'Pending',
+        comment: response.data.data.comment || '',
+      }]);
+      setNewBorrow({ borrow_date: getCurrentDate(), status: '', user: '', comment: '' });
     } catch (err) {
-      console.error('Error adding borrow:', err);
+      console.error('Error adding borrow:', err.response?.data?.error?.message || err.message);
       alert('Failed to add borrow record.');
     }
   };
@@ -78,68 +87,103 @@ function Borrow() {
   const [page, setPage] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [newBorrow, setNewBorrow] = useState({
-    date: getCurrentDate(),
+    borrow_date: getCurrentDate(),
     status: '',
-    borrower: '',
-    item: '',
-    return_date: '',
+    user: '',
+    comment: '',
   });
   const [borrows, setBorrows] = useState([]);
   const [editId, setEditId] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [users, setUsers] = useState([]);
   const navigate = useNavigate();
 
-  const statusOptions = ['Pending', 'Borrowed', 'Returned', 'Overdue'];
-  const borrowerOptions = ['Loungfar', 'Tockky', 'Nana'];
-  const itemOptions = ['Book', 'Laptop', 'Tool', 'Camera'];
+  const statusOptions = ['Pending', 'Approved', 'Reject'];
+  const userOptions = ['loungfar', 'ning'];
 
-  const fetchBorrows = async () => {
+  const fetchUsers = async () => {
     try {
-      const response = await axios.get(API_URL, {
+      const response = await axios.get(USERS_API_URL, {
         headers: { Authorization: `Bearer ${API_TOKEN}` },
       });
+      console.log('User API respose:', response.data); 
+      const users = response.data.map(user => {
+        return user.firstname || null;
+      }). filter(Boolean);
+      setUsers(users.length ? users: ['N/A']);
+      } catch (err) {
+        console.error('Error fetching users:', err.response?.data?.error?.message || err.message);
+        alert('Failed to fetch users.');
+        setUsers([]);
+      }
+    };
+
+  const fetchBorrows = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(`${API_URL}?populate=borrow_user`, {
+        headers: { Authorization: `Bearer ${API_TOKEN}` },
+      });
+      console.log('Raw API response:', response.data); 
       const data = response.data.data;
-      console.log('Raw API Data:', data);
-      const formattedData = data.map((borrow) => ({
-        id: borrow.id,
-        date: borrow.attributes?.date || getCurrentDate(),
-        status: borrow.attributes?.status || 'Pending',
-        borrower: borrow.attributes?.borrower || 'Unknown',
-        item: borrow.attributes?.item || '',
-        return_date: borrow.attributes?.return_date || '',
-      }));
-      console.log('Formatted borrows:', formattedData);
+      const formattedData = data.map((borrow) => {
+        console.log('Borrow record:', borrow);
+        return {
+          id: borrow.id,
+          borrow_date: borrow.date || getCurrentDate(),
+          borrower: borrow.borrow_user?.username || 'N/A',
+          status: borrow.statas || 'Pending',
+          comment: borrow.comment || '',
+        };
+      });
       setBorrows(formattedData);
     } catch (err) {
       console.error('Error fetching borrows:', err.response?.data?.error?.message || err.message);
       alert('Failed to fetch borrow records.');
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchBorrows();
+    fetchUsers();
   }, []);
 
   const handleEdit = (borrow) => {
     setEditId(borrow.id);
-    setNewBorrow({ ...borrow });
+    setNewBorrow({
+      borrow_date: borrow.borrow_date,
+      status: borrow.status,
+      user: borrow.borrower === 'N/A' ? '' : borrow.borrower, // Handle 'N/A' case
+      comment: borrow.comment,
+    });
   };
 
   const handleSaveEdit = async () => {
     try {
       const response = await axios.put(
         `${API_URL}/${editId}`,
-        { data: { ...newBorrow, date: getCurrentDate() } },
+        { data: { date: getCurrentDate(), statas: newBorrow.status, borrow_user: { username: newBorrow.user }, comment: newBorrow.comment } },
         { headers: { Authorization: `Bearer ${API_TOKEN}` } }
       );
       setBorrows(
         borrows.map((borrow) =>
-          borrow.id === editId ? response.data.data : borrow
+          borrow.id === editId
+            ? {
+                id: response.data.data.id,
+                borrow_date: response.data.data.date,
+                borrower: response.data.data.borrow_user?.username || 'N/A',
+                status: response.data.data.statas || 'Pending',
+                comment: response.data.data.comment || '',
+              }
+            : borrow
         )
       );
       setEditId(null);
-      setNewBorrow({ date: '', status: '', borrower: '', item: '', return_date: '' });
+      setNewBorrow({ borrow_date: getCurrentDate(), status: '', user: '', comment: '' });
     } catch (err) {
-      console.error('Error updating borrow:', err);
+      console.error('Error updating borrow:', err.response?.data?.error?.message || err.message);
       alert('Failed to update borrow record.');
     }
   };
@@ -151,22 +195,21 @@ function Borrow() {
       });
       setBorrows(borrows.filter((borrow) => borrow.id !== id));
     } catch (err) {
-      console.error('Error deleting borrow:', err);
+      console.error('Error deleting borrow:', err.response?.data?.error?.message || err.message);
       alert('Failed to delete borrow record.');
     }
   };
 
   const handleDetail = (borrowId) => {
-    navigate(`/borrow-details/${borrowId}`);
+    navigate(`/borrow_detail/${borrowId}`);
   };
 
   const filteredBorrows = borrows.filter((borrow) =>
-    (borrow.borrower || '').toLowerCase().includes(searchQuery.toLowerCase())
+    (borrow.borrower || 'N/A').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
     <ModernBox sx={{ maxWidth: '2100px', margin: '0 auto' }}>
-      {/* Form Section */}
       <ModernPaper sx={{ p: 3, mb: 4, borderRadius: '15px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6}>
@@ -175,23 +218,23 @@ function Borrow() {
               type="date"
               fullWidth
               variant="outlined"
-              value={newBorrow.date}
+              value={newBorrow.borrow_date}
               disabled
               InputLabelProps={{ shrink: true }}
             />
           </Grid>
           <Grid item xs={12} sm={6}>
             <FormControl fullWidth>
-              <InputLabel>Borrower</InputLabel>
+              <InputLabel>User</InputLabel>
               <ModernSelect
-                value={newBorrow.borrower}
-                label="Borrower"
-                onChange={(e) => setNewBorrow({ ...newBorrow, borrower: e.target.value })}
+                value={newBorrow.user}
+                label="User"
+                onChange={(e) => setNewBorrow({ ...newBorrow, user: e.target.value })}
               >
                 <MenuItem value="">
                   <em>None</em>
                 </MenuItem>
-                {borrowerOptions.map((option) => (
+                {users.map((option) => (
                   <MenuItem key={option} value={option}>
                     {option}
                   </MenuItem>
@@ -207,9 +250,6 @@ function Borrow() {
                 label="Status"
                 onChange={(e) => setNewBorrow({ ...newBorrow, status: e.target.value })}
               >
-                <MenuItem value="">
-                  <em>None</em>
-                </MenuItem>
                 {statusOptions.map((option) => (
                   <MenuItem key={option} value={option}>
                     {option}
@@ -219,90 +259,12 @@ function Borrow() {
             </FormControl>
           </Grid>
           <Grid item xs={12} sm={6}>
-            <FormControl fullWidth>
-              <InputLabel>Item</InputLabel>
-              <ModernSelect
-                value={newBorrow.item}
-                label="Item"
-                onChange={(e) => setNewBorrow({ ...newBorrow, item: e.target.value })}
-              >
-                <MenuItem value="">
-                  <em>None</em>
-                </MenuItem>
-                {itemOptions.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option}
-                  </MenuItem>
-                ))}
-              </ModernSelect>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth>
-              <InputLabel>Approver</InputLabel>
-              <ModernSelect
-                value={newBorrow.borrower}
-                label="Borrower"
-                onChange={(e) => setNewBorrow({ ...newBorrow, borrower: e.target.value })}
-              >
-                <MenuItem value="">
-                  <em>None</em>
-                </MenuItem>
-                {borrowerOptions.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option}
-                  </MenuItem>
-                ))}
-              </ModernSelect>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth>
-              <InputLabel>Comment</InputLabel>
-              <ModernSelect
-                value={newBorrow.borrower}
-                label="Borrower"
-                onChange={(e) => setNewBorrow({ ...newBorrow, borrower: e.target.value })}
-              >
-                <MenuItem value="">
-                  <em>None</em>
-                </MenuItem>
-                {borrowerOptions.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option}
-                  </MenuItem>
-                ))}
-              </ModernSelect>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth>
-              <InputLabel>Return Approver</InputLabel>
-              <ModernSelect
-                value={newBorrow.borrower}
-                label="Borrower"
-                onChange={(e) => setNewBorrow({ ...newBorrow, borrower: e.target.value })}
-              >
-                <MenuItem value="">
-                  <em>None</em>
-                </MenuItem>
-                {borrowerOptions.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option}
-                  </MenuItem>
-                ))}
-              </ModernSelect>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12}>
             <ModernTextField
-              label="Return Date"
-              type="date"
+              label="Comment"
               fullWidth
               variant="outlined"
-              value={newBorrow.return_date}
-              onChange={(e) => setNewBorrow({ ...newBorrow, return_date: e.target.value })}
-              InputLabelProps={{ shrink: true }}
+              value={newBorrow.comment}
+              onChange={(e) => setNewBorrow({ ...newBorrow, comment: e.target.value })}
             />
           </Grid>
           <Grid item xs={12} sx={{ textAlign: 'right' }}>
@@ -326,79 +288,83 @@ function Borrow() {
         </Grid>
       </ModernPaper>
 
-      {/* Search Bar */}
       <Box sx={{ mb: 4 }}>
         <SearchBar
           search={searchQuery}
           setSearch={setSearchQuery}
-          label="Search for Borrower"
+          label="Search for User"
           sx={{ maxWidth: '400px', borderRadius: '25px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
         />
       </Box>
 
-      {/* Table Section */}
-      <ModernTableContainer
-        sx={{
-          borderRadius: '15px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-          background: '#fff',
-        }}
-      >
-        <Table>
-          <ModernTableHead>
-            <TableRow>
-              <TableCell sx={{ fontWeight: 'bold' }}>ID</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Borrower</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Item</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Return Date</TableCell>
-              <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>Actions</TableCell>
-            </TableRow>
-          </ModernTableHead>
-          <TableBody>
-            {filteredBorrows
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((borrow) => (
-                <ModernTableRow key={borrow.id}>
-                  <TableCell>{borrow.id}</TableCell>
-                  <TableCell>{borrow.date}</TableCell>
-                  <TableCell>{borrow.status}</TableCell>
-                  <TableCell>{borrow.borrower}</TableCell>
-                  <TableCell>{borrow.item}</TableCell>
-                  <TableCell>{borrow.return_date || 'Not Set'}</TableCell>
-                  <TableCell sx={{ textAlign: 'center' }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 5 }}>
-                      <Button onClick={() => handleEdit(borrow)} sx={{ padding: 0, minWidth: 'auto' }}>
-                        <EditRoundedIcon />
-                      </Button>
-                      <Button onClick={() => handleDelete(borrow.id)} sx={{ padding: 0, minWidth: 'auto' }}>
-                        <DeleteRoundedIcon />
-                      </Button>
-                      <Button onClick={() => handleDetail(borrow.id)} sx={{ padding: 0, minWidth: 'auto' }}>
-                        <EyeOutlinedIcon />
-                      </Button>
-                    </Box>
-                  </TableCell>
-                </ModernTableRow>
-              ))}
-          </TableBody>
-        </Table>
-      </ModernTableContainer>
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <>
+          <ModernTableContainer
+            sx={{
+              borderRadius: '15px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              background: '#fff',
+            }}
+          >
+            <Table>
+              <ModernTableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 'bold' }}>ID</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Borrow Date</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>User</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Comment</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>Actions</TableCell>
+                </TableRow>
+              </ModernTableHead>
+              <TableBody>
+                {filteredBorrows
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((borrow) => (
+                    <ModernTableRow key={borrow.id}>
+                      <TableCell>{borrow.id}</TableCell>
+                      <TableCell>{borrow.borrow_date}</TableCell>
+                      <TableCell>{borrow.borrower}</TableCell> {/* Display borrower directly */}
+                      <TableCell>{borrow.status}</TableCell>
+                      <TableCell>{borrow.comment || 'None'}</TableCell>
+                      <TableCell sx={{ textAlign: 'center' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                          <Button onClick={() => handleEdit(borrow)} sx={{ padding: 0, minWidth: 'auto' }}>
+                            <EditRoundedIcon />
+                          </Button>
+                          <Button onClick={() => handleDelete(borrow.id)} sx={{ padding: 0, minWidth: 'auto' }}>
+                            <DeleteRoundedIcon />
+                          </Button>
+                          <Button onClick={() => handleDetail(borrow.id)} sx={{ padding: 0, minWidth: 'auto' }}>
+                            <EyeOutlinedIcon />
+                          </Button>
+                        </Box>
+                      </TableCell>
+                    </ModernTableRow>
+                  ))}
+              </TableBody>
+            </Table>
+          </ModernTableContainer>
 
-      <TablePagination
-        rowsPerPageOptions={[5, 10, 25]}
-        component="div"
-        count={filteredBorrows.length}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={(event, newPage) => setPage(newPage)}
-        onRowsPerPageChange={(event) => {
-          setRowsPerPage(parseInt(event.target.value, 10));
-          setPage(0); // Reset to first page on rows per page change
-        }}
-        sx={{ mt: 2 }}
-      />
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={filteredBorrows.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(event, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(event) => {
+              setRowsPerPage(parseInt(event.target.value, 10));
+              setPage(0);
+            }}
+            sx={{ mt: 2 }}
+          />
+        </>
+      )}
     </ModernBox>
   );
 }

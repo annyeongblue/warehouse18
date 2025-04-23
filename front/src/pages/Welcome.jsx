@@ -91,7 +91,7 @@ const Welcome = () => {
                 fontSize: { xs: '1.2rem', md: '1.5rem' },
                 fontWeight: 500,
                 color: 'text.secondary',
-                mb: 2,
+                mb: 3,
               }}
             >
               Welcome to Your Inventory!
@@ -105,6 +105,7 @@ const Welcome = () => {
                 cursor: 'pointer',
                 color: openForm === 'login' ? 'primary.main' : 'blue',
                 fontWeight: 600,
+                fontSize: { xs: 40, md: 20 },
                 mb: 3,
                 transition: 'color 0.3s',
                 '&:hover': { color: 'primary.dark' },
@@ -119,10 +120,10 @@ const Welcome = () => {
                 <LoginTest />
                 <Typography
                   sx={{
-                    mt: 1,
+                    mt: 2,
                     color: 'primary.main',
                     cursor: 'pointer',
-                    fontSize: '0.9rem',
+                    fontSize: '1.1rem',
                     '&:hover': { textDecoration: 'underline' },
                   }}
                   onClick={() => handleToggleForm('signup')}
@@ -140,7 +141,8 @@ const Welcome = () => {
                 cursor: 'pointer',
                 color: openForm === 'signup' ? 'primary.main' : 'blue',
                 fontWeight: 600,
-                mb: 1,
+                fontSize: { xs: 40, md: 20 },
+                mb: 3,
                 transition: 'color 0.3s',
                 '&:hover': { color: 'primary.dark' },
                 display: openForm === 'login' ? 'none' : 'block',
@@ -150,14 +152,14 @@ const Welcome = () => {
             </Typography>
 
             <Collapse in={openForm === 'signup'} timeout={500}>
-              <Box sx={{ width: '100%', maxWidth: '480px', mx: 'auto' }}>
+              <Box sx={{ width: '100%', maxWidth: '480px', mx: 'auto', mb: 2 }}>
                 <RegisterTest />
                 <Typography
                   sx={{
-                    mt: 1,
+                    mt: 3,
                     color: 'primary.main',
                     cursor: 'pointer',
-                    fontSize: '0.9rem',
+                    fontSize: '1.1rem',
                     '&:hover': { textDecoration: 'underline' },
                   }}
                   onClick={() => handleToggleForm('login')}

@@ -4,11 +4,8 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableContainer,
-  TableHead,
   TableRow,
   TablePagination,
-  TextField,
   Button,
   FormControl,
   InputLabel,
@@ -26,33 +23,42 @@ import axios from 'axios';
 const API_URL = 'http://localhost:1337/api/exports';
 const API_TOKEN = import.meta.env.VITE_API_TOKEN;
 
-const getCurrentData = () => new Date().toISOString().split('T')[0];
+const getCurrentDate = () => new Date().toISOString().split('T')[0];
 
-function AddOrder({ exports, setExport, newExport, setNewExport }) {
-  const handleAddOrder = () => {
-    const { status, comment } = newExport;
-    if (!status) {
+function AddExport({ exports, setExports, newExport, setNewExport }) {
+  const handleAddExport = async () => {
+    const { status, user } = newExport;
+    if (!status || !user) {
       alert("Please fill out required fields.");
       return;
     }
 
-    const orderExists = exports.some(
-      (order) => order.comment && order.comment.toLowerCase() === comment.toLowerCase()
+    const exportExists = exports.some(
+      (exp) => exp.user && exp.user.toLowerCase() === user.toLowerCase()
     );
-    if (orderExists) {
-      alert("Order already exists.");
+    if (exportExists) {
+      alert("Export record already exists for this user.");
       return;
     }
 
-    const newExportData = { ...newExport, id: exports.length + 1, date: getCurrentData() };
-    setExport([...exports, newExportData].sort((a, b) => a.id - b.id)); // Added sorting by ID
-    setNewExport({ date: '', status: '', comment: '', export_approver: '', export_user: '' });
+    try {
+      const response = await axios.post(
+        API_URL,
+        { data: { ...newExport, export_date: getCurrentDate() } },
+        { headers: { Authorization: `Bearer ${API_TOKEN}` } }
+      );
+      setExports([...exports, response.data.data]);
+      setNewExport({ export_date: '', status: '', user: '', item: '', qty: '', comment: '' });
+    } catch (err) {
+      console.error('Error adding export:', err);
+      alert('Failed to add export record.');
+    }
   };
 
   return (
     <ModernButton
       variant="contained"
-      onClick={handleAddOrder}
+      onClick={handleAddExport}
       sx={{
         width: '160px',
         borderRadius: '20px',
@@ -62,28 +68,30 @@ function AddOrder({ exports, setExport, newExport, setNewExport }) {
         '&:hover': { background: 'linear-gradient(45deg, #1565c0, #2196f3)' },
       }}
     >
-      Add Order
+      Add Export
     </ModernButton>
   );
 }
 
-const Exports = () => {
+function Export() {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [page, setPage] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [newExport, setNewExport] = useState({
-    date: getCurrentData(),
+    export_date: getCurrentDate(),
     status: '',
+    user: '',
+    item: '',
+    qty: '',
     comment: '',
-    export_approver: '',
-    export_user: '',
   });
-  const [exports, setExport] = useState([]);
+  const [exports, setExports] = useState([]);
   const [editId, setEditId] = useState(null);
   const navigate = useNavigate();
 
-  const statusOptions = ['Pending', 'Shipped', 'Delivered', 'Cancelled'];
-  const userOptions = ['JohnDoe', 'JaneSmith', 'AliceJohnson', 'BobBrown'];
+  const statusOptions = ['Pending', 'Exported', 'Received', 'Overdue']; // Adjusted status options
+  const userOptions = ['Loungfar', 'Tockky', 'Nana'];
+  const itemOptions = ['Book', 'Laptop', 'Tool', 'Camera'];
 
   const fetchExports = async () => {
     try {
@@ -91,17 +99,19 @@ const Exports = () => {
         headers: { Authorization: `Bearer ${API_TOKEN}` },
       });
       const data = response.data.data;
-      const formattedData = data.map((order) => ({
-        id: order.id,
-        date: order.date || getCurrentData(),
-        status: order.status || 'Pending',
-        comment: order.comment || '',
-        export_approver: order.export_approver || '',
-        export_user: order.export_user || '',
-      })).sort((a, b) => a.id - b.id); // Added sorting by ID
-      setExport(formattedData);
+      const formattedData = data.map((exp) => ({
+        id: exp.id,
+        export_date: exp.attributes?.export_date || getCurrentDate(),
+        status: exp.attributes?.status || 'Pending',
+        user: exp.attributes?.user || 'Unknown',
+        item: exp.attributes?.item || '',
+        qty: exp.attributes?.qty || '1',
+        comment: exp.attributes?.comment || '',
+      }));
+      setExports(formattedData);
     } catch (err) {
       console.error('Error fetching exports:', err.response?.data?.error?.message || err.message);
+      alert('Failed to fetch export records.');
     }
   };
 
@@ -109,49 +119,104 @@ const Exports = () => {
     fetchExports();
   }, []);
 
-  const handleEdit = (order) => {
-    setEditId(order.id);
-    setNewExport({ ...order, date: getCurrentData() });
+  const handleEdit = (exp) => {
+    setEditId(exp.id);
+    setNewExport({ ...exp });
   };
 
-  const handleSaveEdit = () => {
-    setExport(
-      exports.map((order) =>
-        order.id === editId ? { ...order, ...newExport, date: getCurrentData() } : order
-      ).sort((a, b) => a.id - b.id) // Added sorting by ID
-    );
-    setEditId(null);
-    setNewExport({ date: '', status: '', comment: '', export_approver: '', export_user: '' });
+  const handleSaveEdit = async () => {
+    try {
+      const response = await axios.put(
+        `${API_URL}/${editId}`,
+        { data: { ...newExport, export_date: getCurrentDate() } },
+        { headers: { Authorization: `Bearer ${API_TOKEN}` } }
+      );
+      setExports(
+        exports.map((exp) =>
+          exp.id === editId ? response.data.data : exp
+        )
+      );
+      setEditId(null);
+      setNewExport({ export_date: '', status: '', user: '', item: '', qty: '', comment: '' });
+    } catch (err) {
+      console.error('Error updating export:', err);
+      alert('Failed to update export record.');
+    }
   };
 
-  const handleDelete = (id) => {
-    setExport(exports.filter((order) => order.id !== id).sort((a, b) => a.id - b.id)); // Added sorting by ID
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`${API_URL}/${id}`, {
+        headers: { Authorization: `Bearer ${API_TOKEN}` },
+      });
+      setExports(exports.filter((exp) => exp.id !== id));
+    } catch (err) {
+      console.error('Error deleting export:', err);
+      alert('Failed to delete export record.');
+    }
   };
 
-  const handleDetail = (orderId) => {
-    navigate(`/export_detail`);
+  const handleDetail = (exportId) => {
+    navigate(`/export_detail/${exportId}`);
   };
 
-  const filteredExports = exports.filter((order) =>
-    (order.comment || '').toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredExports = exports.filter((exp) =>
+    (exp.user || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
     <ModernBox sx={{ maxWidth: '2100px', margin: '0 auto' }}>
       <ModernPaper sx={{ p: 3, mb: 4, borderRadius: '15px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12} sm={4}>
             <ModernTextField
-              label="Date"
+              label="Export Date"
               type="date"
               fullWidth
               variant="outlined"
-              value={newExport.date}
+              value={newExport.export_date}
               disabled
-              InputLabelProps={{ shrink: true }}
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          {/* <Grid item xs={12} sm={4}>
+            <FormControl fullWidth>
+              <InputLabel>Item</InputLabel>
+              <ModernSelect
+                value={newExport.item}
+                label="Item"
+                onChange={(e) => setNewExport({ ...newExport, item: e.target.value })}
+              >
+                <MenuItem value="">
+                  <em>None</em>
+                </MenuItem>
+                {itemOptions.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </ModernSelect>
+            </FormControl>
+          </Grid> */}
+          <Grid item xs={12} sm={4}>
+            <FormControl fullWidth>
+              <InputLabel>User</InputLabel>
+              <ModernSelect
+                value={newExport.user}
+                label="User"
+                onChange={(e) => setNewExport({ ...newExport, user: e.target.value })}
+              >
+                <MenuItem value="">
+                  <em>None</em>
+                </MenuItem>
+                {userOptions.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </ModernSelect>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={4}>
             <FormControl fullWidth>
               <InputLabel>Status</InputLabel>
               <ModernSelect
@@ -170,45 +235,17 @@ const Exports = () => {
               </ModernSelect>
             </FormControl>
           </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth>
-              <InputLabel>Export Approver</InputLabel>
-              <ModernSelect
-                value={newExport.export_approver}
-                label="Export Approver"
-                onChange={(e) => setNewExport({ ...newExport, export_approver: e.target.value })}
-              >
-                <MenuItem value="">
-                  <em>None</em>
-                </MenuItem>
-                {userOptions.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option}
-                  </MenuItem>
-                ))}
-              </ModernSelect>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth>
-              <InputLabel>Export User</InputLabel>
-              <ModernSelect
-                value={newExport.export_user}
-                label="Export User"
-                onChange={(e) => setNewExport({ ...newExport, export_user: e.target.value })}
-              >
-                <MenuItem value="">
-                  <em>None</em>
-                </MenuItem>
-                {userOptions.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option}
-                  </MenuItem>
-                ))}
-              </ModernSelect>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12}>
+          {/* <Grid item xs={12} sm={6}>
+            <ModernTextField
+              label="Quantity"
+              type="number"
+              fullWidth
+              variant="outlined"
+              value={newExport.qty}
+              onChange={(e) => setNewExport({ ...newExport, qty: e.target.value })}
+            />
+          </Grid> */}
+          <Grid item xs={12} sm={12}>
             <ModernTextField
               label="Comment"
               fullWidth
@@ -232,12 +269,7 @@ const Exports = () => {
                 Save Edit
               </ModernButton>
             ) : (
-              <AddOrder
-                exports={exports}
-                setExport={setExport}
-                newExport={newExport}
-                setNewExport={setNewExport}
-              />
+              <AddExport exports={exports} setExports={setExports} newExport={newExport} setNewExport={setNewExport} />
             )}
           </Grid>
         </Grid>
@@ -247,7 +279,7 @@ const Exports = () => {
         <SearchBar
           search={searchQuery}
           setSearch={setSearchQuery}
-          label="Search for Order"
+          label="Search for User"
           sx={{ maxWidth: '400px', borderRadius: '25px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
         />
       </Box>
@@ -263,38 +295,42 @@ const Exports = () => {
           <ModernTableHead>
             <TableRow>
               <TableCell sx={{ fontWeight: 'bold' }}>ID</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Comment</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Export Approver</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Export Date</TableCell>
+              {/* <TableCell sx={{ fontWeight: 'bold' }}>Item</TableCell> */}
+              {/* <TableCell sx={{ fontWeight: 'bold' }}>Quantity</TableCell> */}
+              <TableCell sx={{ fontWeight: 'bold' }}>User</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Export User</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Comment</TableCell>
               <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>Actions</TableCell>
             </TableRow>
           </ModernTableHead>
           <TableBody>
-            {exports.map((order) => (
-              <ModernTableRow key={order.id}>
-                <TableCell>{order.id}</TableCell>
-                <TableCell>{order.date}</TableCell>
-                <TableCell>{order.comment}</TableCell>
-                <TableCell>{order.export_approver}</TableCell>
-                <TableCell>{order.status}</TableCell>
-                <TableCell>{order.export_user}</TableCell>
-                <TableCell sx={{ textAlign: 'center' }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 5 }}>
-                    <Button onClick={() => handleEdit(order)} sx={{ padding: 0, minWidth: 'auto' }}>
-                      <EditRoundedIcon />
-                    </Button>
-                    <Button onClick={() => handleDelete(order.id)} sx={{ padding: 0, minWidth: 'auto' }}>
-                      <DeleteRoundedIcon />
-                    </Button>
-                    <Button onClick={() => handleDetail(order.id)} sx={{ padding: 0, minWidth: 'auto' }}>
-                      <EyeOutlinedIcon />
-                    </Button>
-                  </Box>
-                </TableCell>
-              </ModernTableRow>
-            ))}
+            {filteredExports
+              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+              .map((exp) => (
+                <ModernTableRow key={exp.id}>
+                  <TableCell>{exp.id}</TableCell>
+                  <TableCell>{exp.export_date}</TableCell>
+                  {/* <TableCell>{exp.item}</TableCell> */}
+                  {/* <TableCell>{exp.qty}</TableCell> */}
+                  <TableCell>{exp.user}</TableCell>
+                  <TableCell>{exp.status}</TableCell>
+                  <TableCell>{exp.comment || 'None'}</TableCell>
+                  <TableCell sx={{ textAlign: 'center' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 5 }}>
+                      <Button onClick={() => handleEdit(exp)} sx={{ padding: 0, minWidth: 'auto' }}>
+                        <EditRoundedIcon />
+                      </Button>
+                      <Button onClick={() => handleDelete(exp.id)} sx={{ padding: 0, minWidth: 'auto' }}>
+                        <DeleteRoundedIcon />
+                      </Button>
+                      <Button onClick={() => handleDetail(exp.id)} sx={{ padding: 0, minWidth: 'auto' }}>
+                        <EyeOutlinedIcon />
+                      </Button>
+                    </Box>
+                  </TableCell>
+                </ModernTableRow>
+              ))}
           </TableBody>
         </Table>
       </ModernTableContainer>
@@ -306,11 +342,14 @@ const Exports = () => {
         rowsPerPage={rowsPerPage}
         page={page}
         onPageChange={(event, newPage) => setPage(newPage)}
-        onRowsPerPageChange={(event) => setRowsPerPage(parseInt(event.target.value, 10))}
+        onRowsPerPageChange={(event) => {
+          setRowsPerPage(parseInt(event.target.value, 10));
+          setPage(0);
+        }}
         sx={{ mt: 2 }}
       />
     </ModernBox>
   );
-};
+}
 
-export default Exports;
+export default Export;

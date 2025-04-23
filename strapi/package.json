@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@strapi/plugin-cloud": "5.10.3",
-    "@strapi/plugin-users-permissions": "^5.10.3",
+    "@strapi/plugin-users-permissions": "^5.12.3",
     "@strapi/provider-email-nodemailer": "^5.10.4",
     "@strapi/strapi": "5.10.3",
     "axios": "^1.8.1",

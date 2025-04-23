@@ -7,15 +7,9 @@
     "displayName": "borrow_detail"
   },
   "options": {
-    "draftAndPublish": true
+    "draftAndPublish": false
   },
   "attributes": {
-    "borrow": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::borrow.borrow",
-      "inversedBy": "borrow_details"
-    },
     "item": {
       "type": "relation",
       "relation": "manyToOne",

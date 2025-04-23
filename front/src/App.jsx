@@ -22,7 +22,7 @@ import Import from './pages/Import';
 import TypeSelected from './components/common/TypeSelected'
 import Brand from './pages/Brand'
 import Unit from './pages/Unit'
-import Order from './pages/Order';
+import Order from './pages/Order'
 import UProfile from './components/common/UProfile'
 import OrderDetails from './pages/Order_Details';
 import ImportDetails from './pages/Import_Details';
@@ -32,6 +32,9 @@ import Borrow from './pages/Borrow';
 import BorrowDetails from './pages/Borrow_Details';
 import Export from './pages/Export';
 import ExportDetails from './pages/Export_Details';
+import OrderReport from './pages/ReportOrder';
+
+import Test from './CRUSTEST/crud'
 
 import GoogleAuth from '../src/test/GoogleAuth'
 
@@ -44,6 +47,10 @@ import LogT from './test/LoginTest';
 import ReT from './test/RegisterTest';
 
 import Callback from './callback';
+
+import CRUD from './CRUSTEST/crud'
+import Orders from './CRUSTEST/orders'
+import Imports from './CRUSTEST/imports'
 
 const Layout = ({ children }) => {
   const location = useLocation();
@@ -98,7 +105,7 @@ const App = () => {
           <Route path="/history" element={<History />} />
           <Route path="/auth/callback/google" element={<GoogleAuthCallback />} />
 
-          <Route path="/requests" element={<Requests />} />
+          {/* <Route path="/requests" element={<Requests />} /> */}
           <Route path="/search" element={<Search />} />
           <Route path="/sidetest" element={<SideTest />} />
           <Route path="/navbar" element={<Navbar open={open} setOpen={setOpen} />} /> Pass props to Navbar
@@ -106,6 +113,7 @@ const App = () => {
           <Route path="/Login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           
+          <Route path="/reportorder" element={<OrderReport />} />
           <Route path="/searchbar" element={<SearchBar />} />
           <Route path="/user" element={<User />} />
           <Route path="/logt" element={<LogT />} />
@@ -113,18 +121,23 @@ const App = () => {
           <Route path="/profile" element={<Profile />} />
           <Route path="/users" element={<Users />} />
           <Route path="/import" element={<Import />} />
-          <Route path="/import_detail/:id" element={<ImportDetails />} />
+          <Route path="/import_detail/:importId" element={<ImportDetails />} />
           <Route path="/type" element={<TypeSelected />} />
           <Route path="/order" element={<Order />} />
-          <Route path="/order_detail/:id" element={<OrderDetails />} />
+          <Route path="/order_detail/:orderId" element={<OrderDetails />} />
           <Route path="/google" element={<GoogleAuth />} />
           <Route path="/uprofile" element={<UProfile />} />
           <Route path="/repair" element={<Repair />} />
-          <Route path="/repair_detail/:id" element={<RepairDetails />} />
+          <Route path="/repair_detail/:repairId" element={<RepairDetails />} />
           <Route path="/borrow" element={<Borrow />} />
-          <Route path="/borrow_detail/:id" element={<BorrowDetails />} />
+          <Route path="/borrow_detail/:borrowId" element={<BorrowDetails />} />
           <Route path="/export" element={<Export />} />
-          <Route path="/export_detail" element={<ExportDetails />} />
+          <Route path="/export_detail/:exportId" element={<ExportDetails />} />
+
+          <Route path="/crud" element={<CRUD />} />
+          <Route path="/orders" element={<Orders />} />
+          <Route path="/imports" element={<Imports />} />
+          {/* <Route path="/test" element={<Test />} /> */}
 
           <Route path='/auth/google/callback' element={<Callback />} />
           
